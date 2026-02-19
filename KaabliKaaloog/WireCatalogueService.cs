@@ -45,7 +45,7 @@ namespace KaabliKataloog.Services
         private string BuildOdbcConnectionString(string path)
             => $@"Driver={{Microsoft Access Driver (*.mdb, *.accdb)}};Dbq={path};Uid=Admin;Pwd=;";
 
-        private DbConn TryOpenOleDb(string path, string provider)
+        private DbConn TryOpenOleDb(string path, string provider, List<string> errors)
         {
             try
             {
@@ -54,13 +54,14 @@ namespace KaabliKataloog.Services
                 conn.Open();
                 return conn;
             }
-            catch
+            catch (Exception ex)
             {
+                errors.Add($"[{provider}] {ex.Message}");
                 return null;
             }
         }
 
-        private System.Data.Odbc.OdbcConnection TryOpenOdbc(string path)
+        private System.Data.Odbc.OdbcConnection TryOpenOdbc(string path, List<string> errors)
         {
             try
             {
@@ -69,8 +70,9 @@ namespace KaabliKataloog.Services
                 conn.Open();
                 return conn;
             }
-            catch
+            catch (Exception ex)
             {
+                errors.Add($"[ODBC] {ex.Message}");
                 return null;
             }
         }
@@ -80,21 +82,23 @@ namespace KaabliKataloog.Services
         /// </summary>
         private DbConnection OpenBestConnection(string path)
         {
+            var errors = new List<string>();
+
             // Try OleDb (ACE 16)
-            var ace16 = TryOpenOleDb(path, "Microsoft.ACE.OLEDB.16.0");
+            var ace16 = TryOpenOleDb(path, "Microsoft.ACE.OLEDB.16.0", errors);
             if (ace16 != null) return ace16;
 
             // Fallback: OleDb (ACE 12)
-            var ace12 = TryOpenOleDb(path, "Microsoft.ACE.OLEDB.12.0");
+            var ace12 = TryOpenOleDb(path, "Microsoft.ACE.OLEDB.12.0", errors);
             if (ace12 != null) return ace12;
 
-            // Fallback: ODBC driver (still requires Access Database Engine, but sometimes available even if ACE OleDb isn’t)
-            var odbc = TryOpenOdbc(path);
+            // Fallback: ODBC driver
+            var odbc = TryOpenOdbc(path, errors);
             if (odbc != null) return odbc;
 
             // If we’re here, nothing opened
             throw new InvalidOperationException(
-                "Access provider not available (ACE 16.0 / ACE 12.0 / ODBC). Install the 64-bit Microsoft Access Database Engine or enable the ODBC driver.");
+                "Access provider not available. Errors:\n" + string.Join("\n", errors));
         }
 
 

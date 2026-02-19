@@ -16,6 +16,11 @@ namespace KaabliKataloog
 
         public Result OnStartup(UIControlledApplication application)
         {
+#if !NET48
+            // Register encoding provider for .NET Core / .NET 5+ (Revit 2025/2026)
+            // This is required for System.Data.OleDb to read Access databases correctly.
+            System.Text.Encoding.RegisterProvider(System.Text.CodePagesEncodingProvider.Instance);
+#endif
             // Define the custom tab name
             string tabName = "RK Tools";
 
