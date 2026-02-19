@@ -17,11 +17,11 @@
 	</PropertyGroup>
 
   <ItemGroup Condition="'$(TargetFramework)'=='net8.0-windows'">
-    <PackageReference Include="System.Data.Odbc" Version="8.0.0" />
+    <PackageReference Include="System.Data.Odbc" Version="8.0.0" GeneratePathProperty="true" />
+    <PackageReference Include="System.Text.Encoding.CodePages" Version="8.0.0" GeneratePathProperty="true" />
     <PackageReference Include="Nice3point.Revit.Api.RevitAPI" Version="2026.*" />
     <PackageReference Include="Nice3point.Revit.Api.RevitAPIUI" Version="2026.*" />
     <PackageReference Include="Nice3point.Revit.Api.AdWindows" Version="2026.*" />
-    <PackageReference Include="System.Text.Encoding.CodePages" Version="8.0.0" />
   </ItemGroup>
 
   <!-- Costura only for .NET 4.8 -->
@@ -51,8 +51,14 @@
     <PackageReference Include="MaterialDesignThemes" Version="5.2.0" />
     <PackageReference Include="Newtonsoft.Json" Version="13.0.3" />
     <PackageReference Include="ricaun.Revit.UI" Version="0.7.1" />
-    <PackageReference Include="System.Data.OleDb" Version="9.0.10" />
+    <PackageReference Include="System.Data.OleDb" Version="9.0.10" GeneratePathProperty="true" />
   </ItemGroup>
+
+  <Target Name="CopyWindowsAssets" AfterTargets="Build" Condition="'$(TargetFramework)' == 'net8.0-windows'">
+    <Copy SourceFiles="$(PkgSystem_Data_OleDb)\runtimes\win\lib\net8.0\System.Data.OleDb.dll" DestinationFolder="$(TargetDir)" OverwriteReadOnlyFiles="true" />
+    <Copy SourceFiles="$(PkgSystem_Data_Odbc)\runtimes\win\lib\net8.0\System.Data.Odbc.dll" DestinationFolder="$(TargetDir)" OverwriteReadOnlyFiles="true" />
+    <Copy SourceFiles="$(PkgSystem_Text_Encoding_CodePages)\lib\net8.0\System.Text.Encoding.CodePages.dll" DestinationFolder="$(TargetDir)" OverwriteReadOnlyFiles="true" />
+  </Target>
 	
 	<ItemGroup>
 		<Resource Include="Assets\KaabliKataloog.tiff">
