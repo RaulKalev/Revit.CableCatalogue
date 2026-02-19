@@ -59,6 +59,10 @@
     <Copy SourceFiles="$(PkgSystem_Data_Odbc)\runtimes\win\lib\net8.0\System.Data.Odbc.dll" DestinationFolder="$(TargetDir)" OverwriteReadOnlyFiles="true" />
     <Copy SourceFiles="$(PkgSystem_Text_Encoding_CodePages)\lib\net8.0\System.Text.Encoding.CodePages.dll" DestinationFolder="$(TargetDir)" OverwriteReadOnlyFiles="true" />
   </Target>
+
+  <Target Name="RemoveDepsJson" AfterTargets="Build;Publish" Condition="'$(TargetFramework)' == 'net8.0-windows'">
+    <Delete Files="$(TargetDir)$(AssemblyName).deps.json" />
+  </Target>
 	
 	<ItemGroup>
 		<Resource Include="Assets\KaabliKataloog.tiff">

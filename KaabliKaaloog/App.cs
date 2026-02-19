@@ -18,8 +18,24 @@ namespace KaabliKataloog
         {
 #if !NET48
             // Register encoding provider for .NET Core / .NET 5+ (Revit 2025/2026)
-            // This is required for System.Data.OleDb to read Access databases correctly.
             System.Text.Encoding.RegisterProvider(System.Text.CodePagesEncodingProvider.Instance);
+
+            // ⚠️ NUCLEAR FIX: Force load the Windows-specific DLLs from the plugin directory
+            // This prevents the runtime from resolving to the generic "reference assembly" which throws PlatformNotSupportedException.
+            try 
+            {
+                var assemblyDir = Path.GetDirectoryName(System.Reflection.Assembly.GetExecutingAssembly().Location);
+                var oledbPath = Path.Combine(assemblyDir, "System.Data.OleDb.dll");
+                var odbcPath = Path.Combine(assemblyDir, "System.Data.Odbc.dll");
+
+                if (File.Exists(oledbPath)) System.Runtime.Loader.AssemblyLoadContext.Default.LoadFromAssemblyPath(oledbPath);
+                if (File.Exists(odbcPath)) System.Runtime.Loader.AssemblyLoadContext.Default.LoadFromAssemblyPath(odbcPath);
+            }
+            catch (Exception ex)
+            {
+                // Just log to debug, don't crash startup
+                Debug.WriteLine($"Error force loading assemblies: {ex.Message}");
+            }
 #endif
             // Define the custom tab name
             string tabName = "RK Tools";
