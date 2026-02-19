@@ -1,6 +1,7 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 	
 	<PropertyGroup>
+		<Configuration Condition=" '$(Configuration)' == '' ">Release</Configuration>
 		<TargetFrameworks>net48;net8.0-windows</TargetFrameworks>
 		<PlatformTarget>x64</PlatformTarget>
 		<UseWPF>true</UseWPF>
