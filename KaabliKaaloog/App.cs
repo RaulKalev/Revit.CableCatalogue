@@ -54,7 +54,7 @@ namespace KaabliKataloog
             ribbonPanel = application.CreateOrSelectPanel(tabName, "EL");
 
             // Create PushButton with embedded resource
-            ribbonPanel.CreatePushButton<Class1>()
+            ribbonPanel.CreatePushButton<WireCatalogueCommand>()
                 .SetLargeImage("Assets/KaabliKataloog.tiff")
                 .SetText("Kaabli\nKataloog")
                 .SetToolTip("Kaabli Kataloog on Revitile loodud plugin, mis aitab inseneridel" +

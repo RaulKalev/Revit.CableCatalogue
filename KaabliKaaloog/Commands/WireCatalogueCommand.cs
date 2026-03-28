@@ -7,7 +7,7 @@ using System.Windows;
 namespace KaabliKataloog
 {
     [Transaction(TransactionMode.Manual)]
-    public class Class1 : IExternalCommand
+    public class WireCatalogueCommand : IExternalCommand
     {
         public Result Execute(ExternalCommandData commandData, ref string message, ElementSet elements)
         {
