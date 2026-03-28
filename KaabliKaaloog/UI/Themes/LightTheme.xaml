@@ -13,7 +13,9 @@
     <Color x:Key="IconHoverColor">#FF808080</Color>
     <Color x:Key="IconPressedColor">#bebebe</Color>
     <Color x:Key="TextHighlightColor">#CDEAFF</Color>
-    <!-- New Icon Foreground -->
+    <Color x:Key="SelectionHoverColor">#FF0078D7</Color>
+    <Color x:Key="SelectionPressedColor">#FFD7E4F2</Color>
+    <Color x:Key="ScrollBarThumbColor">#FF808080</Color>
 
     <!-- Brushes -->
     <SolidColorBrush x:Key="PrimaryBackgroundBrush" Color="{StaticResource PrimaryBackgroundColor}" />
@@ -26,5 +28,8 @@
     <SolidColorBrush x:Key="IconHoverBrush" Color="{StaticResource IconHoverColor}" />
     <SolidColorBrush x:Key="IconPressedBrush" Color="{StaticResource IconPressedColor}" />
     <SolidColorBrush x:Key="TextHighlightBrush" Color="{StaticResource TextHighlightColor}" />
+    <SolidColorBrush x:Key="SelectionHoverBrush" Color="{StaticResource SelectionHoverColor}" />
+    <SolidColorBrush x:Key="SelectionPressedBrush" Color="{StaticResource SelectionPressedColor}" />
+    <SolidColorBrush x:Key="ScrollBarThumbBrush" Color="{StaticResource ScrollBarThumbColor}" />
 
 </ResourceDictionary>

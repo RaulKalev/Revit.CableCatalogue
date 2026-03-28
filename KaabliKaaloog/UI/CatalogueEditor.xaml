@@ -1,0 +1,234 @@
+<Window
+    x:Class="KaabliKataloog.CatalogueEditor"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:materialDesign="http://materialdesigninxaml.net/winfx/xaml/themes"
+    Title="Kataloogi redaktor"
+    Width="520"
+    Height="680"
+    AllowsTransparency="True"
+    Background="Transparent"
+    WindowStyle="None"
+    WindowStartupLocation="CenterScreen">
+
+    <Window.Resources>
+        <ResourceDictionary>
+            <ResourceDictionary.MergedDictionaries>
+                <ResourceDictionary Source="pack://application:,,,/MaterialDesignThemes.Wpf;component/Themes/MaterialDesignTheme.Dark.xaml" />
+                <ResourceDictionary Source="Themes/ElementStyles.xaml" />
+            </ResourceDictionary.MergedDictionaries>
+
+            <!-- Label style (local) -->
+            <Style x:Key="FieldLabel" TargetType="TextBlock">
+                <Setter Property="Width" Value="140"/>
+                <Setter Property="VerticalAlignment" Value="Center"/>
+                <Setter Property="FontSize" Value="12"/>
+                <Setter Property="Foreground" Value="{DynamicResource ForegroundBrush}"/>
+                <Setter Property="DockPanel.Dock" Value="Left"/>
+            </Style>
+
+            <!-- TextBox style — based on shared CustomTextBoxStyle -->
+            <Style x:Key="FieldBox" BasedOn="{StaticResource CustomTextBoxStyle}" TargetType="TextBox">
+                <Setter Property="Height" Value="28"/>
+                <Setter Property="FontSize" Value="12"/>
+                <Setter Property="HorizontalAlignment" Value="Stretch"/>
+            </Style>
+
+            <!-- Button style — based on shared CustomActionButtonStyle -->
+            <Style x:Key="ActionBtn" BasedOn="{StaticResource CustomActionButtonStyle}" TargetType="Button">
+                <Setter Property="Width" Value="Auto"/>
+                <Setter Property="Height" Value="36"/>
+                <Setter Property="FontSize" Value="13"/>
+                <Setter Property="Margin" Value="5,5,5,0"/>
+            </Style>
+        </ResourceDictionary>
+    </Window.Resources>
+
+    <Grid Background="Transparent">
+        <!-- Blurred border -->
+        <Border BorderBrush="{DynamicResource BorderBrush}" BorderThickness="2"
+                CornerRadius="10" Opacity="0.7" ClipToBounds="True" SnapsToDevicePixels="True">
+            <Border.Effect><BlurEffect KernelType="Gaussian" Radius="2"/></Border.Effect>
+        </Border>
+
+        <!-- Main content -->
+        <Border Margin="2" Background="{DynamicResource PrimaryBackgroundBrush}" CornerRadius="10">
+            <Grid>
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="30"/>
+                    <RowDefinition Height="*"/>
+                    <RowDefinition Height="Auto"/>
+                </Grid.RowDefinitions>
+
+                <!-- Title bar -->
+                <Border
+                    Grid.Row="0"
+                    Background="{DynamicResource PrimaryBackgroundBrush}"
+                    BorderBrush="Gray"
+                    BorderThickness=".6"
+                    ClipToBounds="True"
+                    CornerRadius="9,9,0,0"
+                    SnapsToDevicePixels="True">
+                    <DockPanel
+                        Background="Transparent"
+                        VerticalAlignment="Center"
+                        MouseLeftButtonDown="TitleBar_MouseDown">
+                        <Button
+                            Width="35"
+                            Height="19"
+                            Background="Transparent"
+                            BorderBrush="Transparent"
+                            Click="Close_Click"
+                            DockPanel.Dock="Right"
+                            ToolTip="Close">
+                            <Button.Template>
+                                <ControlTemplate TargetType="Button">
+                                    <Grid Background="Transparent">
+                                        <materialDesign:PackIcon
+                                            x:Name="CloseIcon"
+                                            Width="20"
+                                            Height="20"
+                                            HorizontalAlignment="Center"
+                                            VerticalAlignment="Center"
+                                            Foreground="{DynamicResource IconBrush}"
+                                            Kind="CloseCircleOutline" />
+                                    </Grid>
+                                    <ControlTemplate.Triggers>
+                                        <Trigger Property="IsMouseOver" Value="True">
+                                            <Setter TargetName="CloseIcon" Property="Foreground" Value="#DC6B6B" />
+                                        </Trigger>
+                                        <Trigger Property="IsPressed" Value="True">
+                                            <Setter TargetName="CloseIcon" Property="Foreground" Value="#B42C2C" />
+                                        </Trigger>
+                                    </ControlTemplate.Triggers>
+                                </ControlTemplate>
+                            </Button.Template>
+                        </Button>
+                        <TextBlock
+                            Margin="10,0"
+                            VerticalAlignment="Center"
+                            FontSize="13"
+                            FontWeight="SemiBold"
+                            Foreground="{DynamicResource ForegroundBrush}"
+                            Text="Kataloogi redaktor" />
+                    </DockPanel>
+                </Border>
+
+                <!-- Form -->
+                <ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Auto" Margin="16,8,16,8">
+                    <StackPanel>
+
+                        <!-- Section: Add Entry -->
+                        <TextBlock Text="Lisa uus kaabel" FontSize="14" FontWeight="Bold"
+                                   Foreground="{DynamicResource ForegroundBrush}" Margin="0,0,0,10"/>
+
+                        <!-- Tüüp -->
+                        <DockPanel Margin="0,4" LastChildFill="True">
+                            <TextBlock Text="Kaabli tüüp *:" Style="{StaticResource FieldLabel}"/>
+                            <TextBox x:Name="TxtWireName" Style="{StaticResource FieldBox}"
+                                     ToolTip="Nt: JMK, ÖKKJ"/>
+                        </DockPanel>
+
+                        <!-- Materjal -->
+                        <DockPanel Margin="0,4" LastChildFill="True">
+                            <TextBlock Text="Materjal *:" Style="{StaticResource FieldLabel}"/>
+                            <ComboBox x:Name="CmbMaterial" Style="{StaticResource DarkThemeComboBox}"
+                                      Height="28" FontSize="12">
+                                <ComboBoxItem Content="Alumiinium" />
+                                <ComboBoxItem Content="Vask" />
+                            </ComboBox>
+                        </DockPanel>
+
+                        <!-- Klass -->
+                        <DockPanel Margin="0,4" LastChildFill="True">
+                            <TextBlock Text="Tulereakts. klass:" Style="{StaticResource FieldLabel}"/>
+                            <TextBox x:Name="TxtFireClass" Style="{StaticResource FieldBox}"
+                                     ToolTip="Nt: Cca, B2ca"/>
+                        </DockPanel>
+
+                        <!-- Halogeenivaba -->
+                        <DockPanel Margin="0,4" LastChildFill="True">
+                            <TextBlock Text="Halogeenivaba:" Style="{StaticResource FieldLabel}"/>
+                            <ComboBox x:Name="CmbHalogenFree" Style="{StaticResource DarkThemeComboBox}"
+                                      Height="28" FontSize="12">
+                                <ComboBoxItem Content="Jah" />
+                                <ComboBoxItem Content="Ei" />
+                            </ComboBox>
+                        </DockPanel>
+
+                        <!-- Soonte arv -->
+                        <DockPanel Margin="0,4" LastChildFill="True">
+                            <TextBlock Text="Soonte arv *:" Style="{StaticResource FieldLabel}"/>
+                            <TextBox x:Name="TxtConductorCount" Style="{StaticResource FieldBox}"
+                                     ToolTip="Nt: 3, 4, 5"/>
+                        </DockPanel>
+
+                        <!-- Juhi ristlõige -->
+                        <DockPanel Margin="0,4" LastChildFill="True">
+                            <TextBlock Text="Juhi ristlõige (mm²) *:" Style="{StaticResource FieldLabel}"/>
+                            <TextBox x:Name="TxtWireSize" Style="{StaticResource FieldBox}"
+                                     ToolTip="Nt: 1.5, 2.5, 4"/>
+                        </DockPanel>
+
+                        <!-- UV Kindel -->
+                        <DockPanel Margin="0,4" LastChildFill="True">
+                            <TextBlock Text="UV-kindel:" Style="{StaticResource FieldLabel}"/>
+                            <ComboBox x:Name="CmbUvKindel" Style="{StaticResource DarkThemeComboBox}"
+                                      Height="28" FontSize="12">
+                                <ComboBoxItem Content="Jah" />
+                                <ComboBoxItem Content="Ei" />
+                            </ComboBox>
+                        </DockPanel>
+
+                        <!-- Kaitsejuht -->
+                        <DockPanel Margin="0,4" LastChildFill="True">
+                            <TextBlock Text="Koos kaitsejuhiga:" Style="{StaticResource FieldLabel}"/>
+                            <ComboBox x:Name="CmbKoosKaitsejuhiga" Style="{StaticResource DarkThemeComboBox}"
+                                      Height="28" FontSize="12">
+                                <ComboBoxItem Content="Jah" />
+                                <ComboBoxItem Content="Ei" />
+                            </ComboBox>
+                        </DockPanel>
+
+                        <!-- Diameeter -->
+                        <DockPanel Margin="0,4" LastChildFill="True">
+                            <TextBlock Text="Välisläbimõõt (mm):" Style="{StaticResource FieldLabel}"/>
+                            <TextBox x:Name="TxtVälisläbimõõt" Style="{StaticResource FieldBox}"/>
+                        </DockPanel>
+
+                        <!-- Painderaadius -->
+                        <DockPanel Margin="0,4" LastChildFill="True">
+                            <TextBlock Text="Painderaadius (mm):" Style="{StaticResource FieldLabel}"/>
+                            <TextBox x:Name="TxtPainderaadius" Style="{StaticResource FieldBox}"/>
+                        </DockPanel>
+
+                        <!-- Koormusvool -->
+                        <DockPanel Margin="0,4" LastChildFill="True">
+                            <TextBlock Text="Koormusvool (A):" Style="{StaticResource FieldLabel}"/>
+                            <TextBox x:Name="TxtCurrentCapacity" Style="{StaticResource FieldBox}"
+                                     ToolTip="Nt: 13.5"/>
+                        </DockPanel>
+
+                        <!-- Validation message -->
+                        <TextBlock x:Name="TxtValidation" Foreground="#FFCF6679" FontSize="11"
+                                   Visibility="Collapsed" Margin="0,6,0,0" TextWrapping="Wrap"/>
+
+                        <!-- Add Entry button -->
+                        <Button x:Name="BtnAddEntry" Content="Lisa kaabel kataloogi"
+                                Style="{StaticResource ActionBtn}"
+                                Margin="0,14,0,4" Width="260" HorizontalAlignment="Left"
+                                Click="BtnAddEntry_Click"/>
+
+
+                    </StackPanel>
+                </ScrollViewer>
+
+                <!-- Footer -->
+                <Border Grid.Row="2" BorderBrush="{DynamicResource BorderBrush}" BorderThickness="0,1,0,0" Padding="16,10">
+                    <TextBlock x:Name="TxtFooter" FontSize="11" Opacity="0.6"
+                               Foreground="{DynamicResource ForegroundBrush}"/>
+                </Border>
+            </Grid>
+        </Border>
+    </Grid>
+</Window>

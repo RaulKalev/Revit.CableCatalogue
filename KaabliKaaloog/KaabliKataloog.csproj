@@ -8,7 +8,7 @@
 		<UseWPF>true</UseWPF>
 		<UseWindowsForms>true</UseWindowsForms>
 		<EnableWindowsTargeting>true</EnableWindowsTargeting>
-		<BaseOutputPath>C:\Users\RaulKalev\Desktop\DevDlls\Kaabli kataloo</BaseOutputPath>
+		<BaseOutputPath>C:\Users\mibil\Desktop\DevDlls\KaabliKataloog</BaseOutputPath>
 	</PropertyGroup>
 
 	<PropertyGroup Condition="'$(TargetFramework)'=='net8.0-windows'">
@@ -69,6 +69,9 @@
 			<CopyToOutputDirectory>Never</CopyToOutputDirectory>
 		</Resource>
 		<Resource Include="UI\Themes\DarkTheme.xaml">
+			<CopyToOutputDirectory>Never</CopyToOutputDirectory>
+		</Resource>
+		<Resource Include="UI\Themes\ElementStyles.xaml">
 			<CopyToOutputDirectory>Never</CopyToOutputDirectory>
 		</Resource>
 		<Resource Include="UI\Themes\LightTheme.xaml">

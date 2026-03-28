@@ -184,6 +184,20 @@ namespace KaabliKataloog
                     (string.IsNullOrEmpty(wireSize) || w.WireSize == wireSize))
                 .ToList();
 
+            // Apply search box text filter
+            var searchText = WireSearchBox?.Text?.Trim().ToLowerInvariant() ?? "";
+            if (!string.IsNullOrEmpty(searchText))
+            {
+                filteredWires = filteredWires
+                    .Where(w =>
+                        (w.WireName ?? "").ToLowerInvariant().Contains(searchText) ||
+                        (w.Material ?? "").ToLowerInvariant().Contains(searchText) ||
+                        (w.FireReactionClass ?? "").ToLowerInvariant().Contains(searchText) ||
+                        (w.ConductorCount ?? "").ToLowerInvariant().Contains(searchText) ||
+                        (w.WireSize ?? "").ToLowerInvariant().Contains(searchText))
+                    .ToList();
+            }
+
             // 🧠 Refresh the observable collection, restoring IsSelected where applicable
             foreach (var wire in filteredWires)
             {
@@ -249,6 +263,55 @@ namespace KaabliKataloog
 
             _createWireTypesHandler.WireTypeNamesToCreate = selectedWireNames;
             _createWireTypesEvent.Raise();
+        }
+
+        private void EditCatalogueButton_Click(object sender, RoutedEventArgs e)
+        {
+            // Commit any cell currently being edited
+            WireDataGrid.CommitEdit(DataGridEditingUnit.Row, true);
+
+            _wireCatalogueService.SaveToJson();
+            LoadDropdownOptions();
+
+            foreach (var wire in FilteredWireResults)
+                wire.ClearDirty();
+
+            MessageBox.Show("Muudatused salvestatud.", "Salvestatud", MessageBoxButton.OK, MessageBoxImage.Information);
+        }
+
+        private void WireSearch_TextChanged(object sender, System.Windows.Controls.TextChangedEventArgs e)
+        {
+            OnInputChanged(sender, e);
+        }
+
+        private void ClearWireSearch_Click(object sender, RoutedEventArgs e)
+        {
+            WireSearchBox.Clear();
+        }
+
+        private void DeleteButton_Click(object sender, RoutedEventArgs e)
+        {
+            var toDelete = FilteredWireResults.Where(w => w.IsSelected).ToList();
+            if (!toDelete.Any())
+            {
+                MessageBox.Show("Vali kustutamiseks vähemalt üks rida.", "Kustuta", MessageBoxButton.OK, MessageBoxImage.Information);
+                return;
+            }
+
+            var confirm = MessageBox.Show(
+                $"Kustuta {toDelete.Count} kirje(t)?",
+                "Kustuta",
+                MessageBoxButton.YesNo,
+                MessageBoxImage.Warning);
+            if (confirm != MessageBoxResult.Yes) return;
+
+            foreach (var wire in toDelete)
+            {
+                _wireCatalogueService.RemoveWire(wire);
+                FilteredWireResults.Remove(wire);
+            }
+            _wireCatalogueService.SaveToJson();
+            LoadDropdownOptions();
         }
 
         private void ToggleTheme_Click(object sender, RoutedEventArgs e)

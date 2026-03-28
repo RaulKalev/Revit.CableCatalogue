@@ -34,12 +34,17 @@ namespace KaabliKataloog.Services
             var themeUri = _isDarkMode
                 ? $"pack://application:,,,/{assemblyName};component/UI/Themes/DarkTheme.xaml"
                 : $"pack://application:,,,/{assemblyName};component/UI/Themes/LightTheme.xaml";
+            var elementStylesUri = $"pack://application:,,,/{assemblyName};component/UI/Themes/ElementStyles.xaml";
 
             try
             {
-                var resourceDict = new ResourceDictionary { Source = new Uri(themeUri, UriKind.Absolute) };
                 _window.Resources.MergedDictionaries.Clear();
-                _window.Resources.MergedDictionaries.Add(resourceDict);
+                _window.Resources.MergedDictionaries.Add(new ResourceDictionary
+                {
+                    Source = new Uri("pack://application:,,,/MaterialDesignThemes.Wpf;component/Themes/MaterialDesignTheme.DataGrid.xaml", UriKind.Absolute)
+                });
+                _window.Resources.MergedDictionaries.Add(new ResourceDictionary { Source = new Uri(themeUri, UriKind.Absolute) });
+                _window.Resources.MergedDictionaries.Add(new ResourceDictionary { Source = new Uri(elementStylesUri, UriKind.Absolute) });
             }
             catch (Exception ex)
             {
