@@ -314,6 +314,37 @@ namespace KaabliKataloog
             LoadDropdownOptions();
         }
 
+        private void BrowseDatabase_Click(object sender, RoutedEventArgs e)
+        {
+            var dlg = new Microsoft.Win32.OpenFileDialog
+            {
+                Title       = "Vali cables.json fail",
+                Filter      = "JSON failid (*.json)|*.json|Kõik failid (*.*)|*.*",
+                FilterIndex = 1
+            };
+
+            // Pre-fill dialog with the currently resolved path if available
+            var current = _wireCatalogueService.GetCurrentJsonPath();
+            if (!string.IsNullOrEmpty(current))
+            {
+                dlg.InitialDirectory = Path.GetDirectoryName(current);
+                dlg.FileName         = Path.GetFileName(current);
+            }
+
+            if (dlg.ShowDialog() != true) return;
+
+            _wireCatalogueService.SetCablesJsonPath(dlg.FileName);
+
+            // Refresh the UI with freshly loaded data
+            LoadDropdownOptions();
+            FilteredWireResults.Clear();
+            foreach (var wire in _wireCatalogueService.GetAllWires())
+                FilteredWireResults.Add(wire);
+
+            MessageBox.Show($"Andmebaasi asukoht salvestatud:\n{dlg.FileName}", "Seadistus salvestatud",
+                MessageBoxButton.OK, MessageBoxImage.Information);
+        }
+
         private void ToggleTheme_Click(object sender, RoutedEventArgs e)
         {
             _themeManager.ToggleTheme();

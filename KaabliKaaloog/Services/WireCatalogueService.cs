@@ -6,15 +6,83 @@ using System.Windows;
 using System.Diagnostics;
 using KaabliKataloog.Models;
 using Newtonsoft.Json;
+using Newtonsoft.Json.Linq;
 
 namespace KaabliKataloog.Services
 {
     public class WireCatalogueService
     {
-        private static readonly string JsonPath =
-            @"C:\Users\mibil\EULE Dropbox\0_EULE  Team folder (kogu kollektiiv)\02_EULE REVIT TEMPLATE\cables.json";
+        // Relative sub-path inside the Dropbox root to the shared catalogue file.
+        private const string DropboxRelativePath =
+            @"0_EULE  Team folder (kogu kollektiiv)\02_EULE REVIT TEMPLATE\cables.json";
 
         private List<WireData> _allWires = new List<WireData>();
+
+        /// <summary>
+        /// Returns the resolved path to cables.json:
+        ///   1. User-configured path saved in config.json
+        ///   2. Auto-detected from Dropbox info.json (any account type)
+        ///   3. null if neither source is available
+        /// </summary>
+        private string GetJsonPath()
+        {
+            // 1 — user override stored in config
+            var cfg = AppConfigService.Load();
+            if (!string.IsNullOrWhiteSpace(cfg.CablesJsonPath))
+                return cfg.CablesJsonPath;
+
+            // 2 — auto-detect Dropbox root from Dropbox's own info.json
+            string detected = TryDetectDropboxPath();
+            if (detected != null)
+                return detected;
+
+            return null;
+        }
+
+        /// <summary>Reads Dropbox's info.json to find the Dropbox root folder.</summary>
+        private string TryDetectDropboxPath()
+        {
+            var candidates = new[]
+            {
+                Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData),  "Dropbox", "info.json"),
+                Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "Dropbox", "info.json")
+            };
+
+            foreach (var infoFile in candidates)
+            {
+                if (!File.Exists(infoFile)) continue;
+                try
+                {
+                    var obj = JObject.Parse(File.ReadAllText(infoFile));
+                    // Try every account type (business, personal, etc.)
+                    foreach (var token in obj.Children<JProperty>())
+                    {
+                        var root = token.Value?["path"]?.ToString();
+                        if (string.IsNullOrEmpty(root)) continue;
+                        var candidate = Path.Combine(root, DropboxRelativePath);
+                        if (File.Exists(candidate))
+                            return candidate;
+                    }
+                }
+                catch { /* malformed info.json — skip */ }
+            }
+            return null;
+        }
+
+        /// <summary>
+        /// Persist a user-chosen path and reload the catalogue.
+        /// Pass null to clear the override (reverts to auto-detect).
+        /// </summary>
+        public void SetCablesJsonPath(string path)
+        {
+            var cfg = AppConfigService.Load();
+            cfg.CablesJsonPath = string.IsNullOrWhiteSpace(path) ? null : path;
+            AppConfigService.Save(cfg);
+            Reload();
+        }
+
+        /// <summary>Returns the currently active path (resolved), or null if unresolvable.</summary>
+        public string GetCurrentJsonPath() => GetJsonPath();
 
         public List<string> ConductorCounts { get; private set; } = new List<string>();
         public List<string> WireSizes { get; private set; } = new List<string>();
@@ -42,11 +110,17 @@ namespace KaabliKataloog.Services
 
         public void SaveToJson()
         {
+            var path = GetJsonPath();
+            if (path == null)
+            {
+                MessageBox.Show("cables.json asukoht on määramata. Palun sea faili asukoht seadetest.", "Viga", MessageBoxButton.OK, MessageBoxImage.Error);
+                return;
+            }
             try
             {
-                Directory.CreateDirectory(Path.GetDirectoryName(JsonPath));
+                Directory.CreateDirectory(Path.GetDirectoryName(path));
                 var json = JsonConvert.SerializeObject(_allWires, Formatting.Indented);
-                File.WriteAllText(JsonPath, json);
+                File.WriteAllText(path, json);
             }
             catch (Exception ex)
             {
@@ -226,18 +300,24 @@ namespace KaabliKataloog.Services
 
         private void LoadFromJson()
         {
+            var path = GetJsonPath();
+            if (path == null)
+            {
+                Debug.WriteLine("cables.json path could not be resolved - starting with empty catalogue.");
+                return;
+            }
             try
             {
-                if (!File.Exists(JsonPath))
+                if (!File.Exists(path))
                 {
-                    Debug.WriteLine("cables.json not found - starting with empty catalogue.");
+                    Debug.WriteLine($"cables.json not found at '{path}' - starting with empty catalogue.");
                     return;
                 }
-                var json = File.ReadAllText(JsonPath);
+                var json = File.ReadAllText(path);
                 _allWires = JsonConvert.DeserializeObject<List<WireData>>(json) ?? new List<WireData>();
                 RefreshSortedLists();
                 foreach (var w in _allWires) w.ClearDirty();
-                Debug.WriteLine($"Loaded {_allWires.Count} wires from cables.json");
+                Debug.WriteLine($"Loaded {_allWires.Count} wires from '{path}'");
             }
             catch (Exception ex)
             {

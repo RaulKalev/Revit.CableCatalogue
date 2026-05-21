@@ -65,6 +65,27 @@
                     Grid.Row="0"
                     Margin="0,0,0,1"
                     Foreground="{DynamicResource ForegroundBrush}" />
+                <!--  Database path browse button  -->
+                <Grid
+                    Grid.Row="0"
+                    Grid.Column="0"
+                    Margin="0,0,130,0"
+                    HorizontalAlignment="Right">
+                    <Button
+                        x:Name="BrowseDatabaseButton"
+                        Width="28"
+                        Height="28"
+                        Background="Transparent"
+                        BorderBrush="Transparent"
+                        Click="BrowseDatabase_Click"
+                        ToolTip="Määra cables.json asukoht">
+                        <materialDesign:PackIcon
+                            Width="16"
+                            Height="16"
+                            Foreground="{DynamicResource IconBrush}"
+                            Kind="FolderOpen" />
+                    </Button>
+                </Grid>
                 <Grid
                     Grid.Row="0"
                     Grid.Column="0"

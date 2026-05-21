@@ -1,14 +1,10 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.IO;
 using System.Windows;
-using Newtonsoft.Json;
 
 namespace KaabliKataloog.Services
 {
     public class ThemeManager
     {
-        private const string ConfigFilePath = @"C:\ProgramData\RK Tools\KaabliKataloog\config.json";
         private readonly Window _window;
         private bool _isDarkMode = true;
         public event EventHandler ThemeChanged;
@@ -54,31 +50,15 @@ namespace KaabliKataloog.Services
 
         public void LoadThemeState()
         {
-            try
-            {
-                if (File.Exists(ConfigFilePath))
-                {
-                    var json = File.ReadAllText(ConfigFilePath);
-                    var config = JsonConvert.DeserializeObject<Dictionary<string, bool>>(json);
-                    if (config != null && config.ContainsKey("IsDarkMode"))
-                    {
-                        _isDarkMode = config["IsDarkMode"];
-                    }
-                }
-            }
-            catch { /* Ignore failures */ }
+            var config = AppConfigService.Load();
+            _isDarkMode = config.IsDarkMode;
         }
 
         public void SaveThemeState()
         {
-            try
-            {
-                var config = new { IsDarkMode = _isDarkMode };
-                var json = JsonConvert.SerializeObject(config);
-                Directory.CreateDirectory(Path.GetDirectoryName(ConfigFilePath));
-                File.WriteAllText(ConfigFilePath, json);
-            }
-            catch { /* Ignore failures */ }
+            var config = AppConfigService.Load();
+            config.IsDarkMode = _isDarkMode;
+            AppConfigService.Save(config);
         }
     }
 }
