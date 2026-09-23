@@ -2,476 +2,826 @@
     x:Class="KaabliKataloog.MainWindow"
     xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-    xmlns:av="http://schemas.microsoft.com/expression/blend/2008"
     xmlns:local="clr-namespace:KaabliKataloog"
     xmlns:materialDesign="http://materialdesigninxaml.net/winfx/xaml/themes"
-    xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
-    Title="Camera FOV"
-    Width="1250"
-    Height="600"
-    MinWidth="200"
-    MinHeight="185"
-    AllowsTransparency="True"
-    Background="Transparent"
-    WindowStyle="None"
-    mc:Ignorable="av">
+    x:Name="Root"
+    Title="Kaabli kataloog"
+    Width="1440"
+    Height="780"
+    MinWidth="980"
+    MinHeight="560"
+    Background="{DynamicResource Window.Background}"
+    TextOptions.TextFormattingMode="Display"
+    UseLayoutRounding="True">
+    <!--
+        Standard Windows frame behaviour (Aero Snap, Win+arrows, native resize borders, DWM shadow and Windows 11
+        rounded corners) with the caption area drawn by the plug-in – the same shell as Sentinel. Modeless.
+    -->
+    <WindowChrome.WindowChrome>
+        <WindowChrome
+            CaptionHeight="52"
+            CornerRadius="0"
+            GlassFrameThickness="0,0,0,1"
+            NonClientFrameEdges="None"
+            ResizeBorderThickness="6"
+            UseAeroCaptionButtons="False" />
+    </WindowChrome.WindowChrome>
+
     <Window.Resources>
         <ResourceDictionary>
             <ResourceDictionary.MergedDictionaries>
-                <!--  Material Design DataGrid theme  -->
-                <ResourceDictionary Source="pack://application:,,,/MaterialDesignThemes.Wpf;component/Themes/MaterialDesignTheme.DataGrid.xaml" />
-                <!--  Material Design dark theme (design-time fallback)  -->
-                <ResourceDictionary Source="pack://application:,,,/MaterialDesignThemes.Wpf;component/Themes/MaterialDesignTheme.Dark.xaml" />
-                <!--  Shared element styles  -->
-                <ResourceDictionary Source="Themes/ElementStyles.xaml" />
+                <!--  Palette + materials are replaced at runtime by ThemeManager; styles use DynamicResource  -->
+                <ResourceDictionary Source="pack://application:,,,/KaabliKataloog;component/UI/Themes/DarkTheme.xaml" />
+                <ResourceDictionary Source="pack://application:,,,/KaabliKataloog;component/UI/Themes/ElementStyles.xaml" />
             </ResourceDictionary.MergedDictionaries>
+
+            <!--  Cable name: selectable (copyable) but looks like plain text  -->
+            <Style x:Key="Grid.NameValue" TargetType="{x:Type TextBox}">
+                <Setter Property="IsReadOnly" Value="True" />
+                <Setter Property="Cursor" Value="IBeam" />
+                <Setter Property="FontWeight" Value="SemiBold" />
+                <Setter Property="Foreground" Value="{DynamicResource Text.Primary}" />
+                <Setter Property="SelectionBrush" Value="{DynamicResource Accent}" />
+                <Setter Property="VerticalAlignment" Value="Center" />
+                <Setter Property="FocusVisualStyle" Value="{x:Null}" />
+                <Setter Property="Template">
+                    <Setter.Value>
+                        <ControlTemplate TargetType="{x:Type TextBox}">
+                            <ScrollViewer
+                                x:Name="PART_ContentHost"
+                                Margin="-2,0,0,0"
+                                Focusable="False"
+                                HorizontalScrollBarVisibility="Hidden"
+                                VerticalScrollBarVisibility="Hidden" />
+                        </ControlTemplate>
+                    </Setter.Value>
+                </Setter>
+            </Style>
+
+            <!--  Filter field: label row (with a clear button once something is chosen) above the pop-up button  -->
+            <Style x:Key="FilterClear" BasedOn="{StaticResource Button.Icon}" TargetType="{x:Type Button}">
+                <Setter Property="Width" Value="20" />
+                <Setter Property="Height" Value="20" />
+                <Setter Property="DockPanel.Dock" Value="Right" />
+                <Setter Property="ToolTip" Value="Tühjenda see filter" />
+                <Setter Property="AutomationProperties.Name" Value="Tühjenda filter" />
+            </Style>
         </ResourceDictionary>
     </Window.Resources>
 
+    <Grid
+        x:Name="RootGrid"
+        TextElement.FontFamily="{StaticResource Font.Text}"
+        TextElement.FontSize="{StaticResource FontSize.Body}"
+        TextElement.Foreground="{DynamicResource Text.Primary}">
+        <Grid.ColumnDefinitions>
+            <ColumnDefinition Width="256" />
+            <ColumnDefinition Width="*" />
+        </Grid.ColumnDefinitions>
 
-    <Grid Background="Transparent" ClipToBounds="True">
-        <Grid.RowDefinitions>
-            <RowDefinition Height="14*" />
-
-        </Grid.RowDefinitions>
-        <!--  Outer Border with Opacity and Blur  -->
+        <!--  ============ Sidebar: find + filter (structural material, right edge highlight) ============  -->
         <Border
-            Grid.RowSpan="2"
-            BorderBrush="{DynamicResource BorderBrush}"
-            BorderThickness="2"
-            ClipToBounds="True"
-            CornerRadius="10"
-            Opacity="0.7"
-            SnapsToDevicePixels="True">
-            <Border.Effect>
-                <BlurEffect KernelType="Gaussian" Radius="2" />
-            </Border.Effect>
-        </Border>
-
-        <!--  Content Container (Not Affected by Opacity/Blur)  -->
-        <Border
-            Grid.RowSpan="2"
-            Margin="2,2,2,2"
-            Background="{DynamicResource PrimaryBackgroundBrush}"
-            CornerRadius="10">
-            <Grid>
-                <Grid.RowDefinitions>
-                    <RowDefinition Height="30" />
-                    <RowDefinition Height="*" />
-                </Grid.RowDefinitions>
-
-                <!--  Custom Title Bar  -->
-                <local:TitleBar
-                    Grid.Row="0"
-                    Margin="0,0,0,1"
-                    Foreground="{DynamicResource ForegroundBrush}" />
-                <!--  Database path browse button  -->
-                <Grid
-                    Grid.Row="0"
-                    Grid.Column="0"
-                    Margin="0,0,130,0"
-                    HorizontalAlignment="Right">
-                    <Button
-                        x:Name="BrowseDatabaseButton"
-                        Width="28"
-                        Height="28"
-                        Background="Transparent"
-                        BorderBrush="Transparent"
-                        Click="BrowseDatabase_Click"
-                        ToolTip="Määra cables.json asukoht">
+            Background="{DynamicResource Sidebar.Material}"
+            BorderBrush="{DynamicResource Sidebar.Edge}"
+            BorderThickness="0,0,1,0">
+            <DockPanel>
+                <!--  App identity (part of the draggable caption)  -->
+                <StackPanel
+                    Height="52"
+                    Margin="18,0,12,0"
+                    DockPanel.Dock="Top"
+                    Orientation="Horizontal">
+                    <Border
+                        Width="26"
+                        Height="26"
+                        VerticalAlignment="Center"
+                        Background="{DynamicResource Accent}"
+                        CornerRadius="7">
                         <materialDesign:PackIcon
                             Width="16"
                             Height="16"
-                            Foreground="{DynamicResource IconBrush}"
-                            Kind="FolderOpen" />
-                    </Button>
-                </Grid>
-                <Grid
-                    Grid.Row="0"
-                    Grid.Column="0"
-                    Margin="0,0,100,0"
-                    HorizontalAlignment="Right">
-                    <ToggleButton
-                        x:Name="ThemeToggleButton"
-                        Width="28"
-                        Height="15.5"
-                        Background="Transparent"
-                        BorderBrush="Transparent"
-                        Click="ToggleTheme_Click"
-                        DockPanel.Dock="Right"
-                        IsChecked="True"
-                        ToolTip="Toggle Theme">
+                            HorizontalAlignment="Center"
+                            VerticalAlignment="Center"
+                            Foreground="{DynamicResource Text.OnAccent}"
+                            Kind="CableData" />
+                    </Border>
+                    <TextBlock
+                        Margin="10,0,0,0"
+                        VerticalAlignment="Center"
+                        FontWeight="SemiBold"
+                        Text="Kaabli kataloog" />
+                </StackPanel>
 
-                        <ToggleButton.Template>
-                            <ControlTemplate TargetType="{x:Type ToggleButton}">
-                                <Grid Background="Transparent">
-
-                                    <materialDesign:PackIcon
-                                        x:Name="ThemeToggleIcon"
-                                        Width="30"
-                                        Height="30"
-                                        HorizontalAlignment="Center"
-                                        VerticalAlignment="Center"
-                                        Foreground="{DynamicResource IconBrush}"
-                                        Kind="ToggleSwitchOffOutline" />
-                                </Grid>
-                                <ControlTemplate.Triggers>
-                                    <Trigger Property="IsChecked" Value="True">
-                                        <Setter TargetName="ThemeToggleIcon" Property="Kind" Value="ToggleSwitchOffOutline" />
-                                    </Trigger>
-                                    <Trigger Property="IsChecked" Value="False">
-                                        <Setter TargetName="ThemeToggleIcon" Property="Kind" Value="ToggleSwitchOutline" />
-                                    </Trigger>
-                                </ControlTemplate.Triggers>
-                            </ControlTemplate>
-                        </ToggleButton.Template>
-                    </ToggleButton>
-                </Grid>
-                <Grid
-                    Grid.Row="1"
-                    Grid.Column="0"
-                    Margin="10,0,10,10"
-                    HorizontalAlignment="Stretch">
+                <!--  Footer: catalogue file + appearance  -->
+                <StackPanel Margin="0,0,0,12" DockPanel.Dock="Bottom">
                     <Border
-                        BorderBrush="Transparent"
-                        BorderThickness="1"
-                        ClipToBounds="True" />
-                    <!--  Camera Resolution Dropdown  -->
-                    <StackPanel
-                        Margin="10"
-                        HorizontalAlignment="Stretch"
-                        VerticalAlignment="Top" />
-                    <Grid Background="Transparent" ClipToBounds="True">
-                        <!--  Outer Border with Opacity and Blur  -->
-                        <Border
-                            BorderBrush="{DynamicResource BorderBrush}"
-                            BorderThickness="2"
-                            ClipToBounds="True"
-                            CornerRadius="10"
-                            Opacity="0.7"
-                            SnapsToDevicePixels="True">
-                            <Border.Effect>
-                                <BlurEffect KernelType="Gaussian" Radius="2" />
-                            </Border.Effect>
-                        </Border>
+                        Height="1"
+                        Margin="16,0,16,8"
+                        Background="{DynamicResource Separator}" />
+                    <Button
+                        Height="40"
+                        Margin="8,0"
+                        Padding="10,0"
+                        HorizontalContentAlignment="Stretch"
+                        AutomationProperties.Name="Kataloogi fail"
+                        Click="BrowseDatabase_Click"
+                        Style="{StaticResource Button.Plain}"
+                        ToolTip="{Binding CataloguePathTip}">
+                        <DockPanel>
+                            <materialDesign:PackIcon
+                                Width="16"
+                                Height="16"
+                                Margin="0,0,10,0"
+                                VerticalAlignment="Center"
+                                Foreground="{DynamicResource Text.Secondary}"
+                                Kind="DatabaseOutline" />
+                            <StackPanel VerticalAlignment="Center">
+                                <TextBlock
+                                    Foreground="{DynamicResource Text.Primary}"
+                                    Text="{Binding CatalogueFileName}"
+                                    TextTrimming="CharacterEllipsis" />
+                                <TextBlock Style="{StaticResource Type.Caption}" Text="Vali teine kataloogi fail…" />
+                            </StackPanel>
+                        </DockPanel>
+                    </Button>
+                    <Button
+                        x:Name="ThemeButton"
+                        Height="32"
+                        Margin="8,2,8,0"
+                        Padding="10,0"
+                        HorizontalContentAlignment="Left"
+                        AutomationProperties.Name="Vaheta tumeda ja heleda välimuse vahel"
+                        Click="ToggleTheme_Click"
+                        Style="{StaticResource Button.Plain}"
+                        ToolTip="Vaheta tumeda ja heleda välimuse vahel">
+                        <StackPanel Orientation="Horizontal">
+                            <materialDesign:PackIcon
+                                x:Name="ThemeIcon"
+                                Width="16"
+                                Height="16"
+                                VerticalAlignment="Center"
+                                Foreground="{DynamicResource Text.Secondary}"
+                                Kind="WeatherNight" />
+                            <TextBlock
+                                x:Name="ThemeText"
+                                Margin="10,0,0,0"
+                                VerticalAlignment="Center"
+                                Foreground="{DynamicResource Text.Secondary}"
+                                Text="Tume välimus" />
+                        </StackPanel>
+                    </Button>
+                </StackPanel>
 
-                        <!--  Content Container  -->
-                        <Border
-                            Margin="0,0,0,0"
-                            Background="{DynamicResource PrimaryBackgroundBrush}"
-                            CornerRadius="10">
-                            <Grid Margin="10">
-                                <Grid.ColumnDefinitions>
-                                    <ColumnDefinition Width="Auto" />
-                                    <ColumnDefinition Width="*" />
-                                </Grid.ColumnDefinitions>
+                <ScrollViewer
+                    Focusable="False"
+                    HorizontalScrollBarVisibility="Disabled"
+                    VerticalScrollBarVisibility="Auto">
+                    <StackPanel Margin="16,4,16,16">
+                        <!--  Search (Ctrl+F; Esc clears)  -->
+                        <Grid>
+                            <TextBox
+                                x:Name="WireSearchBox"
+                                Padding="28,0,28,0"
+                                AutomationProperties.Name="Otsi kaablit"
+                                PreviewKeyDown="WireSearchBox_PreviewKeyDown"
+                                Style="{StaticResource Input.Text}"
+                                Tag="Otsi kaablit"
+                                TextChanged="WireSearch_TextChanged"
+                                ToolTip="Otsi nime, materjali, klassi, soonte arvu või ristlõike järgi (Ctrl+F)" />
+                            <materialDesign:PackIcon
+                                Width="15"
+                                Height="15"
+                                Margin="9,0,0,0"
+                                HorizontalAlignment="Left"
+                                VerticalAlignment="Center"
+                                Foreground="{DynamicResource Text.Tertiary}"
+                                IsHitTestVisible="False"
+                                Kind="Magnify" />
+                            <Button
+                                Width="22"
+                                Height="22"
+                                Margin="0,0,5,0"
+                                HorizontalAlignment="Right"
+                                AutomationProperties.Name="Tühjenda otsing"
+                                Click="ClearWireSearch_Click"
+                                Style="{StaticResource Button.Icon}"
+                                ToolTip="Tühjenda otsing (Esc)"
+                                Visibility="{Binding Text, ElementName=WireSearchBox, Converter={StaticResource NotEmptyToVis}}">
+                                <materialDesign:PackIcon
+                                    Width="14"
+                                    Height="14"
+                                    Kind="CloseCircle" />
+                            </Button>
+                        </Grid>
 
+                        <!--  Filters  -->
+                        <DockPanel Height="28" Margin="4,20,0,6">
+                            <Button
+                                Height="24"
+                                Padding="6,0"
+                                Click="ResetFilters_Click"
+                                Content="Lähtesta"
+                                DockPanel.Dock="Right"
+                                FontSize="{StaticResource FontSize.Secondary}"
+                                Style="{StaticResource Button.Plain}"
+                                ToolTip="Taasta kõik filtrid ja tühjenda otsing"
+                                Visibility="{Binding IsFilterActive, Converter={StaticResource BoolToVis}}" />
+                            <TextBlock Style="{StaticResource Type.Group}" Text="FILTRID" />
+                        </DockPanel>
 
+                        <DockPanel Margin="0,0,0,4">
+                            <Button
+                                Click="ClearFilter_Click"
+                                Style="{StaticResource FilterClear}"
+                                Tag="{Binding ElementName=MaterialComboBox}"
+                                Visibility="{Binding SelectedItem, ElementName=MaterialComboBox, Converter={StaticResource NotEmptyToVis}}">
+                                <materialDesign:PackIcon
+                                    Width="13"
+                                    Height="13"
+                                    Kind="Close" />
+                            </Button>
+                            <TextBlock Style="{StaticResource Type.Label}" Text="Voolujuhi materjal" />
+                        </DockPanel>
+                        <ComboBox
+                            x:Name="MaterialComboBox"
+                            AutomationProperties.Name="Voolujuhi materjal"
+                            SelectionChanged="MaterialComboBox_SelectionChanged"
+                            Style="{StaticResource Input.Combo}"
+                            Tag="Kõik" />
 
-                                <!--  🔹 Input Fields with Labels  -->
-                                <Grid Grid.Column="0" Margin="0,5,20,10">
-                                    <Grid.RowDefinitions>
-                                        <RowDefinition Height="Auto" />
-                                        <RowDefinition Height="Auto" />
-                                        <RowDefinition Height="*" />
-                                        <RowDefinition Height="Auto" />
-                                    </Grid.RowDefinitions>
+                        <DockPanel Margin="0,12,0,4">
+                            <Button
+                                Click="ClearFilter_Click"
+                                Style="{StaticResource FilterClear}"
+                                Tag="{Binding ElementName=ReactionClassComboBox}"
+                                Visibility="{Binding SelectedItem, ElementName=ReactionClassComboBox, Converter={StaticResource NotEmptyToVis}}">
+                                <materialDesign:PackIcon
+                                    Width="13"
+                                    Height="13"
+                                    Kind="Close" />
+                            </Button>
+                            <TextBlock Style="{StaticResource Type.Label}" Text="Tulereaktsiooni klass" />
+                        </DockPanel>
+                        <ComboBox
+                            x:Name="ReactionClassComboBox"
+                            AutomationProperties.Name="Tulereaktsiooni klass"
+                            SelectionChanged="ReactionClassComboBox_SelectionChanged"
+                            Style="{StaticResource Input.Combo}"
+                            Tag="Kõik" />
 
-                                    <!--  Search Box  -->
-                                    <Border
-                                        Grid.Row="0"
-                                        Height="26"
-                                        Margin="0,0,0,8"
-                                        Background="{DynamicResource SecondaryBackgroundBrush}"
-                                        BorderBrush="{DynamicResource BorderBrush}"
-                                        BorderThickness="1"
-                                        CornerRadius="8">
-                                        <Grid>
-                                            <Grid.ColumnDefinitions>
-                                                <ColumnDefinition Width="28" />
-                                                <ColumnDefinition Width="*" />
-                                                <ColumnDefinition Width="26" />
-                                            </Grid.ColumnDefinitions>
-                                            <materialDesign:PackIcon
-                                                Grid.Column="0"
-                                                Width="14"
-                                                Height="14"
-                                                HorizontalAlignment="Center"
-                                                VerticalAlignment="Center"
-                                                Foreground="{DynamicResource ForegroundBrush}"
-                                                Kind="Magnify"
-                                                Opacity="0.6" />
-                                            <TextBlock
-                                                Grid.Column="1"
-                                                Margin="2,0,0,0"
-                                                VerticalAlignment="Center"
-                                                FontSize="11"
-                                                Foreground="#FF808080"
-                                                IsHitTestVisible="False"
-                                                Text="Otsi kaablit...">
-                                                <TextBlock.Style>
-                                                    <Style TargetType="TextBlock">
-                                                        <Setter Property="Visibility" Value="Collapsed" />
-                                                        <Style.Triggers>
-                                                            <MultiDataTrigger>
-                                                                <MultiDataTrigger.Conditions>
-                                                                    <Condition Binding="{Binding Text, ElementName=WireSearchBox}" Value="" />
-                                                                    <Condition Binding="{Binding IsFocused, ElementName=WireSearchBox}" Value="False" />
-                                                                </MultiDataTrigger.Conditions>
-                                                                <Setter Property="Visibility" Value="Visible" />
-                                                            </MultiDataTrigger>
-                                                        </Style.Triggers>
-                                                    </Style>
-                                                </TextBlock.Style>
-                                            </TextBlock>
-                                            <TextBox
-                                                x:Name="WireSearchBox"
-                                                Grid.Column="1"
-                                                Height="Auto"
-                                                HorizontalAlignment="Stretch"
-                                                VerticalAlignment="Center"
-                                                VerticalContentAlignment="Center"
-                                                Padding="0"
-                                                Background="Transparent"
-                                                BorderThickness="0"
-                                                FontSize="11"
-                                                Foreground="{DynamicResource ForegroundBrush}"
-                                                Style="{StaticResource CustomTextBoxStyle}"
-                                                TextAlignment="Left"
-                                                TextChanged="WireSearch_TextChanged" />
-                                            <Button
-                                                Grid.Column="2"
-                                                Width="22"
-                                                Height="22"
-                                                Margin="0"
-                                                Click="ClearWireSearch_Click"
-                                                Style="{StaticResource FlatIconButton}"
-                                                ToolTip="Tühjenda otsing">
-                                                <materialDesign:PackIcon
-                                                    Width="12"
-                                                    Height="12"
-                                                    Foreground="{DynamicResource ForegroundBrush}"
-                                                    Kind="CloseCircleOutline"
-                                                    Opacity="0.6" />
-                                            </Button>
-                                        </Grid>
-                                    </Border>
+                        <DockPanel Margin="0,12,0,4">
+                            <Button
+                                Click="ClearFilter_Click"
+                                Style="{StaticResource FilterClear}"
+                                Tag="{Binding ElementName=ConductorCountComboBox}"
+                                Visibility="{Binding SelectedItem, ElementName=ConductorCountComboBox, Converter={StaticResource NotEmptyToVis}}">
+                                <materialDesign:PackIcon
+                                    Width="13"
+                                    Height="13"
+                                    Kind="Close" />
+                            </Button>
+                            <TextBlock Style="{StaticResource Type.Label}" Text="Soonte arv" />
+                        </DockPanel>
+                        <ComboBox
+                            x:Name="ConductorCountComboBox"
+                            AutomationProperties.Name="Soonte arv"
+                            SelectionChanged="ConductorCountComboBox_SelectionChanged"
+                            Style="{StaticResource Input.Combo}"
+                            Tag="Kõik" />
 
-                                    <StackPanel Grid.Row="1" VerticalAlignment="Top">
-                                    <!--  🔹 ComboBox for "Voolujuhi materjal"  -->
-                                    <StackPanel Margin="0,5,0,0" Orientation="Horizontal">
-                                        <TextBlock
-                                            Width="115"
-                                            Margin="0,5,10,5"
-                                            VerticalAlignment="Center"
-                                            FontSize="12"
-                                            Foreground="{DynamicResource ForegroundBrush}"
-                                            Text="Voolujuhi materjal:" />
-                                        <ComboBox
-                                            x:Name="MaterialComboBox"
-                                            Width="96"
-                                            Height="25"
-                                            FontSize="12"
-                                            SelectionChanged="MaterialComboBox_SelectionChanged"
-                                            Style="{StaticResource DarkThemeComboBox}" />
-                                    </StackPanel>
+                        <DockPanel Margin="0,12,0,4">
+                            <Button
+                                Click="ClearFilter_Click"
+                                Style="{StaticResource FilterClear}"
+                                Tag="{Binding ElementName=WireSizeComboBox}"
+                                Visibility="{Binding SelectedItem, ElementName=WireSizeComboBox, Converter={StaticResource NotEmptyToVis}}">
+                                <materialDesign:PackIcon
+                                    Width="13"
+                                    Height="13"
+                                    Kind="Close" />
+                            </Button>
+                            <TextBlock Style="{StaticResource Type.Label}" Text="Juhi ristlõige (mm²)" />
+                        </DockPanel>
+                        <ComboBox
+                            x:Name="WireSizeComboBox"
+                            AutomationProperties.Name="Juhi ristlõige"
+                            SelectionChanged="OnInputChanged"
+                            Style="{StaticResource Input.Combo}"
+                            Tag="Kõik" />
 
-                                    <!--  🔹 ComboBox for "Tulereaktsiooni klass"  -->
-                                    <StackPanel Margin="0,5,0,0" Orientation="Horizontal">
-                                        <TextBlock
-                                            Width="115"
-                                            Margin="0,5,10,5"
-                                            VerticalAlignment="Center"
-                                            FontSize="12"
-                                            Foreground="{DynamicResource ForegroundBrush}"
-                                            Text="Tulereaktsiooni klass:" />
-                                        <ComboBox
-                                            x:Name="ReactionClassComboBox"
-                                            Width="96"
-                                            Height="25"
-                                            FontSize="12"
-                                            SelectionChanged="ReactionClassComboBox_SelectionChanged"
-                                            Style="{StaticResource DarkThemeComboBox}" />
-                                    </StackPanel>
-
-                                    <!--  🔹 Checkbox for "UV-kindel"  -->
-                                    <StackPanel Margin="0,5,0,0" Orientation="Horizontal">
-                                        <TextBlock
-                                            Width="115"
-                                            Margin="0,5,10,5"
-                                            VerticalAlignment="Center"
-                                            FontSize="12"
-                                            Foreground="{DynamicResource ForegroundBrush}"
-                                            Text="UV-kindel:" />
-                                        <CheckBox
-                                            x:Name="UvKindelCheckBox"
-                                            Margin="40.5,0,0,0"
-                                            VerticalAlignment="Center"
-                                            Checked="OnInputChanged"
-                                            IsChecked="False"
-                                            Style="{StaticResource CustomCheckBox}"
-                                            Unchecked="OnInputChanged" />
-                                    </StackPanel>
-
-                                    <!--  🔹 Checkbox for "Koos kaitsejuhiga"  -->
-                                    <StackPanel Margin="0,5,0,0" Orientation="Horizontal">
-                                        <TextBlock
-                                            Width="115"
-                                            Margin="0,5,10,5"
-                                            VerticalAlignment="Center"
-                                            FontSize="12"
-                                            Foreground="{DynamicResource ForegroundBrush}"
-                                            Text="Koos kaitsejuhiga:" />
-                                        <CheckBox
-                                            x:Name="KoosKaitsejuhigaCheckBox"
-                                            Margin="40.5,0,0,0"
-                                            VerticalAlignment="Center"
-                                            Checked="OnInputChanged"
-                                            IsChecked="True"
-                                            Style="{StaticResource CustomCheckBox}"
-                                            Unchecked="OnInputChanged" />
-                                    </StackPanel>
-
-                                    <!--  🔹 ComboBox for "Soonte arv"  -->
-                                    <StackPanel Margin="0,5,0,0" Orientation="Horizontal">
-                                        <TextBlock
-                                            Width="115"
-                                            Margin="0,5,10,5"
-                                            VerticalAlignment="Center"
-                                            FontSize="12"
-                                            Foreground="{DynamicResource ForegroundBrush}"
-                                            Text="Soonte arv:" />
-                                        <ComboBox
-                                            x:Name="ConductorCountComboBox"
-                                            Width="96"
-                                            Height="25"
-                                            FontSize="12"
-                                            SelectionChanged="ConductorCountComboBox_SelectionChanged"
-                                            Style="{StaticResource DarkThemeComboBox}" />
-                                    </StackPanel>
-
-                                    <!--  🔹 ComboBox for "Juhi ristlõige(mm²)"  -->
-                                    <StackPanel Margin="0,5,0,0" Orientation="Horizontal">
-                                        <TextBlock
-                                            Width="115"
-                                            Margin="0,5,10,5"
-                                            VerticalAlignment="Center"
-                                            FontSize="12"
-                                            Foreground="{DynamicResource ForegroundBrush}"
-                                            Text="Juhi ristlõige (mm²):" />
-                                        <ComboBox
-                                            x:Name="WireSizeComboBox"
-                                            Width="96"
-                                            Height="25"
-                                            FontSize="12"
-                                            SelectionChanged="OnInputChanged"
-                                            Style="{StaticResource DarkThemeComboBox}" />
-                                    </StackPanel>
-                                    <Button
-                                        x:Name="CreateWireTypesButton"
-                                        Margin="0,15,0,0"
-                                        HorizontalAlignment="Center"
-                                        Click="CreateWireTypesButton_Click"
-                                        Content="Loo Revitis tüübid"
-                                        Style="{StaticResource CustomActionButtonStyle}" />
-                                    </StackPanel>
-
-                                    <StackPanel Grid.Row="3"
-                                        Margin="0,6,0,4"
-                                        HorizontalAlignment="Right"
-                                        Orientation="Horizontal">
-                                        <Button
-                                            x:Name="EditCatalogueButton"
-                                            Width="80"
-                                            Height="28"
-                                            Margin="0,0,6,0"
-                                            Click="EditCatalogueButton_Click"
-                                            Content="Muuda"
-                                            FontSize="11"
-                                            Style="{StaticResource CustomActionButtonStyle}" />
-                                        <Button
-                                            x:Name="DeleteButton"
-                                            Width="80"
-                                            Height="28"
-                                            Margin="0"
-                                            Click="DeleteButton_Click"
-                                            Content="Kustuta"
-                                            FontSize="11"
-                                            Style="{StaticResource CustomActionButtonStyle}" />
-                                    </StackPanel>
-                                </Grid>
-                                <!--  🔹 Wire List Table - RIGHT Column  -->
-                                <DataGrid
-                                    x:Name="WireDataGrid"
-                                    Grid.Column="1"
-                                    Margin="0,0,0,0"
-                                    AutoGenerateColumns="False"
-                                    Background="{DynamicResource PrimaryBackgroundBrush}"
-                                    CanUserResizeColumns="True"
-                                    CanUserSortColumns="True"
-                                    ColumnHeaderStyle="{StaticResource CustomDataGridColumnHeaderStyle}"
-                                    FontSize="10"
-                                    Foreground="{DynamicResource ForegroundBrush}"
-                                    GridLinesVisibility="All"
-                                    HorizontalGridLinesBrush="{DynamicResource BorderBrush}"
-                                    IsReadOnly="False"
-                                    ItemsSource="{Binding FilteredWireResults}"
-                                    RowHeaderWidth="0"
-                                    ScrollViewer.HorizontalScrollBarVisibility="Disabled"
-                                    Style="{StaticResource CustomDataGridStyle}"
-                                    VerticalGridLinesBrush="{DynamicResource BorderBrush}">
-
-                                    <DataGrid.Columns>
-                                        <DataGridTemplateColumn Width="30" Header="✓" IsReadOnly="True">
-                                            <DataGridTemplateColumn.CellTemplate>
-                                                <DataTemplate>
-                                                    <CheckBox
-                                                        HorizontalAlignment="Center"
-                                                        VerticalAlignment="Center"
-                                                        IsChecked="{Binding Path=IsSelected, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
-                                                        Style="{StaticResource DatagridCheckboxStyle}" />
-                                                </DataTemplate>
-                                            </DataGridTemplateColumn.CellTemplate>
-                                        </DataGridTemplateColumn>
-
-
-
-                                        <DataGridTemplateColumn Header="Nimi" IsReadOnly="True">
-                                            <DataGridTemplateColumn.CellTemplate>
-                                                <DataTemplate>
-                                                    <TextBox
-                                                        Padding="2"
-                                                        HorizontalAlignment="Stretch"
-                                                        VerticalAlignment="Center"
-                                                        Background="Transparent"
-                                                        BorderThickness="0"
-                                                        Cursor="IBeam"
-                                                        FontSize="10"
-                                                        Foreground="{DynamicResource ForegroundBrush}"
-                                                        IsReadOnly="True"
-                                                        Text="{Binding DisplayName, Mode=OneWay}" />
-                                                </DataTemplate>
-                                            </DataGridTemplateColumn.CellTemplate>
-                                        </DataGridTemplateColumn>
-
-                                        <DataGridTextColumn Binding="{Binding WireName, Mode=TwoWay, UpdateSourceTrigger=LostFocus}" EditingElementStyle="{StaticResource DataGridEditingTextBoxStyle}" Header="Tüüp" />
-                                        <DataGridTextColumn Binding="{Binding Material, Mode=TwoWay, UpdateSourceTrigger=LostFocus}" EditingElementStyle="{StaticResource DataGridEditingTextBoxStyle}" Header="Materjal" />
-                                        <DataGridTextColumn Binding="{Binding FireReactionClass, Mode=TwoWay, UpdateSourceTrigger=LostFocus}" EditingElementStyle="{StaticResource DataGridEditingTextBoxStyle}" Header="Klass" />
-                                        <DataGridTextColumn Binding="{Binding HalogenFree, Mode=TwoWay, UpdateSourceTrigger=LostFocus}" EditingElementStyle="{StaticResource DataGridEditingTextBoxStyle}" Header="Halogeenivaba" />
-                                        <DataGridTextColumn Binding="{Binding ConductorCount, Mode=TwoWay, UpdateSourceTrigger=LostFocus}" EditingElementStyle="{StaticResource DataGridEditingTextBoxStyle}" Header="Soonte arv" />
-                                        <DataGridTextColumn Binding="{Binding WireSize, Mode=TwoWay, UpdateSourceTrigger=LostFocus}" EditingElementStyle="{StaticResource DataGridEditingTextBoxStyle}" Header="Juhi ristlõige" />
-                                        <DataGridTextColumn Binding="{Binding UvKindel, Mode=TwoWay, UpdateSourceTrigger=LostFocus}" EditingElementStyle="{StaticResource DataGridEditingTextBoxStyle}" Header="UV Kindel" />
-                                        <DataGridTextColumn Binding="{Binding KoosKaitsejuhiga, Mode=TwoWay, UpdateSourceTrigger=LostFocus}" EditingElementStyle="{StaticResource DataGridEditingTextBoxStyle}" Header="Kaitsejuht" />
-                                        <DataGridTextColumn Binding="{Binding Välisläbimõõt, Mode=TwoWay, UpdateSourceTrigger=LostFocus}" EditingElementStyle="{StaticResource DataGridEditingTextBoxStyle}" Header="Diameeter" />
-                                        <DataGridTextColumn Binding="{Binding Painderaadius, Mode=TwoWay, UpdateSourceTrigger=LostFocus}" EditingElementStyle="{StaticResource DataGridEditingTextBoxStyle}" Header="Painderaadius (mm)" />
-                                        <DataGridTextColumn Binding="{Binding CurrentCapacity, Mode=TwoWay, UpdateSourceTrigger=LostFocus}" EditingElementStyle="{StaticResource DataGridEditingTextBoxStyle}" Header="Koormusvool (A)" />
-                                    </DataGrid.Columns>
-                                </DataGrid>
-                            </Grid>
-                        </Border>
-                    </Grid>
-                </Grid>
-            </Grid>
+                        <CheckBox
+                            x:Name="KoosKaitsejuhigaCheckBox"
+                            Margin="0,18,0,0"
+                            Checked="OnInputChanged"
+                            Content="Koos kaitsejuhiga"
+                            IsChecked="True"
+                            Style="{StaticResource Input.Check}"
+                            ToolTip="Näita ainult kaitsejuhiga kaableid"
+                            Unchecked="OnInputChanged" />
+                        <CheckBox
+                            x:Name="UvKindelCheckBox"
+                            Margin="0,10,0,0"
+                            Checked="OnInputChanged"
+                            Content="Ainult UV-kindlad"
+                            IsChecked="False"
+                            Style="{StaticResource Input.Check}"
+                            Unchecked="OnInputChanged" />
+                    </StackPanel>
+                </ScrollViewer>
+            </DockPanel>
         </Border>
+
+        <!--  ============ Content column ============  -->
+        <Grid Grid.Column="1">
+            <Grid.RowDefinitions>
+                <RowDefinition Height="52" />
+                <RowDefinition Height="Auto" />
+                <RowDefinition Height="*" />
+                <RowDefinition Height="Auto" />
+            </Grid.RowDefinitions>
+
+            <!--  Title area: page title + result count, caption buttons (draggable)  -->
+            <DockPanel Background="Transparent">
+                <StackPanel
+                    VerticalAlignment="Top"
+                    DockPanel.Dock="Right"
+                    Orientation="Horizontal">
+                    <Button
+                        AutomationProperties.Name="Minimeeri"
+                        Click="Minimize_Click"
+                        Style="{StaticResource Caption.Button}"
+                        ToolTip="Minimeeri">
+                        <materialDesign:PackIcon
+                            Width="14"
+                            Height="14"
+                            Kind="WindowMinimize" />
+                    </Button>
+                    <Button
+                        x:Name="MaximizeButton"
+                        AutomationProperties.Name="Maksimeeri"
+                        Click="Maximize_Click"
+                        Style="{StaticResource Caption.Button}"
+                        ToolTip="Maksimeeri">
+                        <materialDesign:PackIcon
+                            x:Name="MaximizeIcon"
+                            Width="14"
+                            Height="14"
+                            Kind="WindowMaximize" />
+                    </Button>
+                    <Button
+                        AutomationProperties.Name="Sulge"
+                        Click="Close_Click"
+                        Style="{StaticResource Caption.Close}"
+                        ToolTip="Sulge">
+                        <materialDesign:PackIcon
+                            Width="14"
+                            Height="14"
+                            Kind="WindowClose" />
+                    </Button>
+                </StackPanel>
+
+                <StackPanel
+                    Margin="24,0,12,0"
+                    VerticalAlignment="Center"
+                    Orientation="Horizontal">
+                    <TextBlock
+                        VerticalAlignment="Center"
+                        Style="{StaticResource Type.Title}"
+                        Text="Kaablid" />
+                    <TextBlock
+                        Margin="12,3,0,0"
+                        VerticalAlignment="Center"
+                        Style="{StaticResource Type.Secondary}"
+                        Text="{Binding ResultSummary}"
+                        TextWrapping="NoWrap" />
+                </StackPanel>
+            </DockPanel>
+
+            <!--  Toolbar: catalogue edits on the left, catalogue changes on the right  -->
+            <DockPanel Grid.Row="1" Margin="24,0,24,12">
+                <StackPanel DockPanel.Dock="Right" Orientation="Horizontal">
+                    <Button
+                        Margin="0,0,8,0"
+                        Click="DeleteButton_Click"
+                        IsEnabled="{Binding HasSelection}"
+                        Style="{StaticResource Button.Destructive}"
+                        ToolTip="Eemalda valitud kaablid kataloogist">
+                        <StackPanel Orientation="Horizontal">
+                            <materialDesign:PackIcon Kind="TrashCanOutline" Style="{StaticResource ButtonIconLabel}" />
+                            <TextBlock Text="Kustuta" />
+                        </StackPanel>
+                    </Button>
+                    <Button
+                        Click="AddCable_Click"
+                        Style="{StaticResource Button.Secondary}"
+                        ToolTip="Lisa kataloogi uus kaabel">
+                        <StackPanel Orientation="Horizontal">
+                            <materialDesign:PackIcon Kind="Plus" Style="{StaticResource ButtonIconLabel}" />
+                            <TextBlock Text="Lisa kaabel" />
+                        </StackPanel>
+                    </Button>
+                </StackPanel>
+
+                <StackPanel Orientation="Horizontal">
+                    <Button
+                        Click="SaveButton_Click"
+                        IsEnabled="{Binding HasDirty}"
+                        Style="{StaticResource Button.Secondary}"
+                        ToolTip="Salvesta tabelis tehtud muudatused kataloogi faili (Ctrl+S)">
+                        <StackPanel Orientation="Horizontal">
+                            <materialDesign:PackIcon Kind="ContentSaveOutline" Style="{StaticResource ButtonIconLabel}" />
+                            <TextBlock Text="Salvesta muudatused" />
+                        </StackPanel>
+                    </Button>
+                    <Border
+                        Margin="10,0,0,0"
+                        Style="{StaticResource Badge.Warning}"
+                        Visibility="{Binding HasDirty, Converter={StaticResource BoolToVis}}">
+                        <TextBlock Text="{Binding DirtySummary}" />
+                    </Border>
+                    <TextBlock
+                        Margin="10,0,0,0"
+                        VerticalAlignment="Center"
+                        Style="{StaticResource Type.Caption}"
+                        Text="Topeltklõps lahtril muudab väärtust"
+                        Visibility="{Binding HasDirty, Converter={StaticResource InverseBoolToVis}}" />
+                </StackPanel>
+            </DockPanel>
+
+            <!--  Catalogue table on an opaque content surface  -->
+            <Border
+                Grid.Row="2"
+                Margin="24,0,24,0"
+                Padding="0,0,0,4"
+                Style="{StaticResource Surface}">
+                <Grid>
+                    <DataGrid
+                        x:Name="WireDataGrid"
+                        AutomationProperties.Name="Kaablid"
+                        CanUserResizeColumns="True"
+                        CanUserSortColumns="True"
+                        IsReadOnly="False"
+                        ItemsSource="{Binding FilteredWireResults}"
+                        Sorting="WireDataGrid_Sorting"
+                        Style="{StaticResource AppGrid}">
+                        <DataGrid.Columns>
+                            <DataGridTemplateColumn
+                                Width="40"
+                                CanUserResize="False"
+                                IsReadOnly="True">
+                                <DataGridTemplateColumn.Header>
+                                    <CheckBox
+                                        Margin="2,0,0,0"
+                                        AutomationProperties.Name="Vali kõik nähtavad"
+                                        Click="SelectAll_Click"
+                                        Loaded="SelectAll_Loaded"
+                                        Style="{StaticResource Input.Check}"
+                                        ToolTip="Vali kõik nähtavad kaablid" />
+                                </DataGridTemplateColumn.Header>
+                                <DataGridTemplateColumn.CellTemplate>
+                                    <DataTemplate>
+                                        <CheckBox
+                                            HorizontalAlignment="Left"
+                                            AutomationProperties.Name="{Binding DisplayName}"
+                                            IsChecked="{Binding IsSelected, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
+                                            Style="{StaticResource Input.Check}" />
+                                    </DataTemplate>
+                                </DataGridTemplateColumn.CellTemplate>
+                            </DataGridTemplateColumn>
+
+                            <DataGridTemplateColumn
+                                Width="1.5*"
+                                MinWidth="130"
+                                Header="Nimi Revitis"
+                                IsReadOnly="True"
+                                SortMemberPath="DisplayName">
+                                <DataGridTemplateColumn.CellTemplate>
+                                    <DataTemplate>
+                                        <TextBox Style="{StaticResource Grid.NameValue}" Text="{Binding DisplayName, Mode=OneWay}" />
+                                    </DataTemplate>
+                                </DataGridTemplateColumn.CellTemplate>
+                            </DataGridTemplateColumn>
+
+                            <DataGridTextColumn
+                                Width="*"
+                                MinWidth="76"
+                                Binding="{Binding WireName, Mode=TwoWay, UpdateSourceTrigger=LostFocus}"
+                                EditingElementStyle="{StaticResource Grid.Edit}"
+                                ElementStyle="{StaticResource Grid.Text}"
+                                Header="Tüüp" />
+                            <DataGridTextColumn
+                                Width="*"
+                                MinWidth="76"
+                                Binding="{Binding Material, Mode=TwoWay, UpdateSourceTrigger=LostFocus}"
+                                EditingElementStyle="{StaticResource Grid.Edit}"
+                                ElementStyle="{StaticResource Grid.Text}"
+                                Header="Materjal" />
+                            <DataGridTextColumn
+                                Width="SizeToHeader"
+                                MinWidth="60"
+                                Binding="{Binding FireReactionClass, Mode=TwoWay, UpdateSourceTrigger=LostFocus}"
+                                EditingElementStyle="{StaticResource Grid.Edit}"
+                                ElementStyle="{StaticResource Grid.Text}"
+                                Header="Klass" />
+                            <DataGridTextColumn
+                                Width="SizeToHeader"
+                                Binding="{Binding HalogenFree, Mode=TwoWay, UpdateSourceTrigger=LostFocus}"
+                                EditingElementStyle="{StaticResource Grid.Edit}"
+                                ElementStyle="{StaticResource Grid.Text}"
+                                Header="Halogeenivaba" />
+                            <DataGridTextColumn
+                                Width="SizeToHeader"
+                                Binding="{Binding ConductorCount, Mode=TwoWay, UpdateSourceTrigger=LostFocus}"
+                                EditingElementStyle="{StaticResource Grid.EditNumber}"
+                                ElementStyle="{StaticResource Grid.Number}"
+                                HeaderStyle="{StaticResource GridHeader.Number}"
+                                SortMemberPath="ConductorCount">
+                                <DataGridTextColumn.Header>
+                                    <StackPanel>
+                                        <TextBlock Text="Soonte" />
+                                        <TextBlock Style="{StaticResource GridHeader.Unit}" Text="arv" />
+                                    </StackPanel>
+                                </DataGridTextColumn.Header>
+                            </DataGridTextColumn>
+                            <DataGridTextColumn
+                                Width="SizeToHeader"
+                                Binding="{Binding WireSize, Mode=TwoWay, UpdateSourceTrigger=LostFocus}"
+                                EditingElementStyle="{StaticResource Grid.EditNumber}"
+                                ElementStyle="{StaticResource Grid.Number}"
+                                HeaderStyle="{StaticResource GridHeader.Number}"
+                                SortMemberPath="WireSize">
+                                <DataGridTextColumn.Header>
+                                    <StackPanel>
+                                        <TextBlock Text="Ristlõige" />
+                                        <TextBlock Style="{StaticResource GridHeader.Unit}" Text="mm²" />
+                                    </StackPanel>
+                                </DataGridTextColumn.Header>
+                            </DataGridTextColumn>
+                            <DataGridTextColumn
+                                Width="SizeToHeader"
+                                Binding="{Binding UvKindel, Mode=TwoWay, UpdateSourceTrigger=LostFocus}"
+                                EditingElementStyle="{StaticResource Grid.Edit}"
+                                ElementStyle="{StaticResource Grid.Text}"
+                                Header="UV-kindel" />
+                            <DataGridTextColumn
+                                Width="SizeToHeader"
+                                Binding="{Binding KoosKaitsejuhiga, Mode=TwoWay, UpdateSourceTrigger=LostFocus}"
+                                EditingElementStyle="{StaticResource Grid.Edit}"
+                                ElementStyle="{StaticResource Grid.Text}"
+                                Header="Kaitsejuht" />
+                            <DataGridTextColumn
+                                Width="SizeToHeader"
+                                Binding="{Binding Välisläbimõõt, Mode=TwoWay, UpdateSourceTrigger=LostFocus}"
+                                EditingElementStyle="{StaticResource Grid.EditNumber}"
+                                ElementStyle="{StaticResource Grid.Number}"
+                                HeaderStyle="{StaticResource GridHeader.Number}"
+                                SortMemberPath="Välisläbimõõt">
+                                <DataGridTextColumn.Header>
+                                    <StackPanel>
+                                        <TextBlock Text="Välisläbimõõt" />
+                                        <TextBlock Style="{StaticResource GridHeader.Unit}" Text="mm" />
+                                    </StackPanel>
+                                </DataGridTextColumn.Header>
+                            </DataGridTextColumn>
+                            <DataGridTextColumn
+                                Width="SizeToHeader"
+                                Binding="{Binding Painderaadius, Mode=TwoWay, UpdateSourceTrigger=LostFocus}"
+                                EditingElementStyle="{StaticResource Grid.EditNumber}"
+                                ElementStyle="{StaticResource Grid.Number}"
+                                HeaderStyle="{StaticResource GridHeader.Number}"
+                                SortMemberPath="Painderaadius">
+                                <DataGridTextColumn.Header>
+                                    <StackPanel>
+                                        <TextBlock Text="Painderaadius" />
+                                        <TextBlock Style="{StaticResource GridHeader.Unit}" Text="mm" />
+                                    </StackPanel>
+                                </DataGridTextColumn.Header>
+                            </DataGridTextColumn>
+                            <DataGridTextColumn
+                                Width="SizeToHeader"
+                                Binding="{Binding CurrentCapacity, Mode=TwoWay, UpdateSourceTrigger=LostFocus}"
+                                EditingElementStyle="{StaticResource Grid.EditNumber}"
+                                ElementStyle="{StaticResource Grid.Number}"
+                                HeaderStyle="{StaticResource GridHeader.Number}">
+                                <DataGridTextColumn.Header>
+                                    <StackPanel>
+                                        <TextBlock Text="Koormusvool" />
+                                        <TextBlock Style="{StaticResource GridHeader.Unit}" Text="A" />
+                                    </StackPanel>
+                                </DataGridTextColumn.Header>
+                            </DataGridTextColumn>
+                        </DataGrid.Columns>
+                    </DataGrid>
+
+                    <!--  Empty state: says why the table is empty and offers the one way forward  -->
+                    <StackPanel
+                        MaxWidth="360"
+                        Margin="24,48,24,24"
+                        HorizontalAlignment="Center"
+                        VerticalAlignment="Center"
+                        Visibility="{Binding IsEmpty, Converter={StaticResource BoolToVis}}">
+                        <materialDesign:PackIcon
+                            Width="36"
+                            Height="36"
+                            Margin="0,0,0,12"
+                            HorizontalAlignment="Center"
+                            Foreground="{DynamicResource Text.Tertiary}"
+                            Kind="{Binding EmptyIcon}" />
+                        <TextBlock
+                            HorizontalAlignment="Center"
+                            Style="{StaticResource Type.Section}"
+                            Text="{Binding EmptyTitle}" />
+                        <TextBlock
+                            Margin="0,6,0,16"
+                            HorizontalAlignment="Center"
+                            Style="{StaticResource Type.Secondary}"
+                            Text="{Binding EmptyMessage}"
+                            TextAlignment="Center" />
+                        <Button
+                            HorizontalAlignment="Center"
+                            Click="BrowseDatabase_Click"
+                            Content="Vali kataloogi fail…"
+                            Style="{StaticResource Button.Secondary}"
+                            Visibility="{Binding IsCatalogueMissing, Converter={StaticResource BoolToVis}}" />
+                        <Button
+                            HorizontalAlignment="Center"
+                            Click="ResetFilters_Click"
+                            Content="Lähtesta filtrid"
+                            Style="{StaticResource Button.Secondary}"
+                            Visibility="{Binding IsCatalogueMissing, Converter={StaticResource InverseBoolToVis}}" />
+                    </StackPanel>
+                </Grid>
+            </Border>
+
+            <!--  Footer: feedback for the last action (left) + selection and the primary action (right)  -->
+            <DockPanel
+                Grid.Row="3"
+                MinHeight="56"
+                Margin="24,0,24,0">
+                <StackPanel
+                    VerticalAlignment="Center"
+                    DockPanel.Dock="Right"
+                    Orientation="Horizontal">
+                    <TextBlock
+                        Margin="0,0,4,0"
+                        VerticalAlignment="Center"
+                        Style="{StaticResource Type.Secondary}"
+                        Text="{Binding SelectionSummary}"
+                        TextWrapping="NoWrap" />
+                    <Button
+                        Height="28"
+                        Margin="0,0,12,0"
+                        Click="ClearSelection_Click"
+                        Content="Tühista valik"
+                        FontSize="{StaticResource FontSize.Secondary}"
+                        Style="{StaticResource Button.Plain}"
+                        Visibility="{Binding HasSelection, Converter={StaticResource BoolToVis}}" />
+                    <Button
+                        x:Name="CreateWireTypesButton"
+                        MinWidth="180"
+                        Click="CreateWireTypesButton_Click"
+                        IsEnabled="{Binding HasSelection}"
+                        Style="{StaticResource Button.Primary}"
+                        ToolTip="Loo valitud kaablitele Revitis juhtme- ja kaablitüübid">
+                        <StackPanel Orientation="Horizontal">
+                            <materialDesign:PackIcon Kind="PlusBoxMultipleOutline" Style="{StaticResource ButtonIconLabel}" />
+                            <TextBlock Text="Loo Revitis tüübid" />
+                        </StackPanel>
+                    </Button>
+                </StackPanel>
+
+                <StackPanel
+                    x:Name="StatusLine"
+                    VerticalAlignment="Center"
+                    AutomationProperties.LiveSetting="Polite"
+                    AutomationProperties.Name="Olek"
+                    Orientation="Horizontal"
+                    Visibility="{Binding StatusMessage, Converter={StaticResource NotEmptyToVis}}">
+                    <materialDesign:PackIcon
+                        Width="15"
+                        Height="15"
+                        Margin="0,0,8,0"
+                        VerticalAlignment="Center">
+                        <materialDesign:PackIcon.Style>
+                            <Style TargetType="{x:Type materialDesign:PackIcon}">
+                                <Setter Property="Kind" Value="CheckCircleOutline" />
+                                <Setter Property="Foreground" Value="{DynamicResource Status.Ok}" />
+                                <Style.Triggers>
+                                    <DataTrigger Binding="{Binding StatusIsError}" Value="True">
+                                        <Setter Property="Kind" Value="AlertCircleOutline" />
+                                        <Setter Property="Foreground" Value="{DynamicResource Status.Error}" />
+                                    </DataTrigger>
+                                </Style.Triggers>
+                            </Style>
+                        </materialDesign:PackIcon.Style>
+                    </materialDesign:PackIcon>
+                    <TextBlock
+                        VerticalAlignment="Center"
+                        Foreground="{DynamicResource Text.Secondary}"
+                        Text="{Binding StatusMessage}"
+                        TextTrimming="CharacterEllipsis"
+                        ToolTip="{Binding StatusMessage}" />
+                </StackPanel>
+            </DockPanel>
+        </Grid>
+
+        <!--  ============ Sheet (in-window, replaces modal message boxes) ============  -->
+        <Grid
+            x:Name="SheetHost"
+            Grid.ColumnSpan="2"
+            Visibility="Collapsed">
+            <Border Background="{DynamicResource Scrim}" MouseLeftButtonDown="Scrim_MouseDown" />
+            <Border
+                x:Name="SheetCard"
+                Width="440"
+                Margin="0,64,0,0"
+                Padding="22,20,22,18"
+                HorizontalAlignment="Center"
+                VerticalAlignment="Top"
+                AutomationProperties.Name="{Binding Text, ElementName=SheetTitle}"
+                KeyboardNavigation.ControlTabNavigation="Cycle"
+                KeyboardNavigation.DirectionalNavigation="Contained"
+                KeyboardNavigation.TabNavigation="Cycle"
+                Style="{StaticResource Floating}">
+                <DockPanel>
+                    <!--  Alternate far left (e.g. "Ära salvesta"), then secondary (Esc) left of primary (Enter)  -->
+                    <DockPanel Margin="34,20,0,0" DockPanel.Dock="Bottom">
+                        <Button
+                            x:Name="SheetAlternate"
+                            MinWidth="88"
+                            Click="SheetAlternate_Click"
+                            DockPanel.Dock="Left"
+                            Style="{StaticResource Button.Secondary}"
+                            Visibility="Collapsed" />
+                        <StackPanel HorizontalAlignment="Right" Orientation="Horizontal">
+                            <Button
+                                x:Name="SheetSecondary"
+                                MinWidth="88"
+                                Margin="0,0,8,0"
+                                Click="SheetSecondary_Click"
+                                Content="Loobu"
+                                Style="{StaticResource Button.Secondary}" />
+                            <Button
+                                x:Name="SheetPrimary"
+                                MinWidth="88"
+                                Click="SheetPrimary_Click"
+                                Style="{StaticResource Button.Primary}" />
+                        </StackPanel>
+                    </DockPanel>
+
+                    <DockPanel Margin="0,0,0,8" DockPanel.Dock="Top">
+                        <materialDesign:PackIcon
+                            x:Name="SheetIcon"
+                            Width="22"
+                            Height="22"
+                            Margin="0,0,12,0"
+                            VerticalAlignment="Top"
+                            Foreground="{DynamicResource Accent.Text}"
+                            Kind="HelpCircleOutline" />
+                        <TextBlock
+                            x:Name="SheetTitle"
+                            VerticalAlignment="Center"
+                            Style="{StaticResource Type.Section}"
+                            TextWrapping="Wrap" />
+                    </DockPanel>
+
+                    <StackPanel Margin="34,0,0,0">
+                        <TextBlock x:Name="SheetMessage" Style="{StaticResource Type.Body}" />
+                        <!--  Optional list (e.g. the types Revit created): name + short note, scrolls when long  -->
+                        <Border
+                            x:Name="SheetDetailsCard"
+                            Margin="0,12,0,0"
+                            Padding="0,4"
+                            Style="{StaticResource InsetCard}"
+                            Visibility="Collapsed">
+                            <ScrollViewer
+                                MaxHeight="240"
+                                Focusable="False"
+                                HorizontalScrollBarVisibility="Disabled"
+                                VerticalScrollBarVisibility="Auto">
+                                <ItemsControl x:Name="SheetDetails" AutomationProperties.Name="Üksikasjad">
+                                    <ItemsControl.ItemTemplate>
+                                        <DataTemplate>
+                                            <DockPanel Margin="12,4">
+                                                <TextBlock
+                                                    Margin="12,0,0,0"
+                                                    VerticalAlignment="Center"
+                                                    DockPanel.Dock="Right"
+                                                    Style="{StaticResource Type.Caption}"
+                                                    Text="{Binding Note}" />
+                                                <TextBlock
+                                                    VerticalAlignment="Center"
+                                                    Text="{Binding Text}"
+                                                    TextTrimming="CharacterEllipsis" />
+                                            </DockPanel>
+                                        </DataTemplate>
+                                    </ItemsControl.ItemTemplate>
+                                </ItemsControl>
+                            </ScrollViewer>
+                        </Border>
+                    </StackPanel>
+                </DockPanel>
+            </Border>
+        </Grid>
     </Grid>
 </Window>

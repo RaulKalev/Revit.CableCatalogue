@@ -119,10 +119,27 @@ namespace KaabliKataloog.Models
                 {
                     baseName = System.Text.RegularExpressions.Regex.Replace(baseName, "pro", "", System.Text.RegularExpressions.RegexOptions.IgnoreCase);
                     baseName = System.Text.RegularExpressions.Regex.Replace(baseName, "firetuf\\s*", "", System.Text.RegularExpressions.RegexOptions.IgnoreCase);
+                    // A hyphen left dangling by the removals above ("AXCMK-HF C-PRO" → "C-") is dropped: "AXCMK-HF C".
+                    baseName = System.Text.RegularExpressions.Regex.Replace(baseName, "-+(?=\\s|$)", "");
                     baseName = baseName.Trim();
                 }
-                string gOrX = (KoosKaitsejuhiga ?? "").Equals("Jah", System.StringComparison.OrdinalIgnoreCase) ? "G" : "X";
-                return $"{baseName} {ConductorCount}{gOrX}{WireSize}";
+                return $"{baseName} {ConductorCount}{CoreSeparator}{WireSize}";
+            }
+        }
+
+        /// <summary>
+        /// "G" only when the protective conductor is one of the cores (green-yellow), e.g. MCMK 3G2.5.
+        /// A concentric protective conductor is written after a slash in the cross-section (AMCMK 3x16/10,
+        /// AXCMK-HF 4x95/35); those cables have no G core, so they get "x" like cables without protection (XPJ 3x1.5).
+        /// </summary>
+        [JsonIgnore]
+        public string CoreSeparator
+        {
+            get
+            {
+                bool withProtective = (KoosKaitsejuhiga ?? "").Equals("Jah", System.StringComparison.OrdinalIgnoreCase);
+                bool concentric = (WireSize ?? "").Contains("/");
+                return withProtective && !concentric ? "G" : "x";
             }
         }
 

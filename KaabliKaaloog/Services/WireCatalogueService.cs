@@ -108,23 +108,26 @@ namespace KaabliKataloog.Services
             RefreshSortedLists();
         }
 
-        public void SaveToJson()
+        /// <summary>Writes the catalogue to cables.json. Returns false (after telling the user why) when it could not.</summary>
+        public bool SaveToJson()
         {
             var path = GetJsonPath();
             if (path == null)
             {
                 MessageBox.Show("cables.json asukoht on määramata. Palun sea faili asukoht seadetest.", "Viga", MessageBoxButton.OK, MessageBoxImage.Error);
-                return;
+                return false;
             }
             try
             {
                 Directory.CreateDirectory(Path.GetDirectoryName(path));
                 var json = JsonConvert.SerializeObject(_allWires, Formatting.Indented);
                 File.WriteAllText(path, json);
+                return true;
             }
             catch (Exception ex)
             {
                 MessageBox.Show($"Andmete salvestamine ebaonnestus: {ex.Message}", "Viga", MessageBoxButton.OK, MessageBoxImage.Error);
+                return false;
             }
         }
 

@@ -1,4 +1,5 @@
 ﻿using Autodesk.Revit.UI;
+using Autodesk.Revit.UI.Events;
 using ricaun.Revit.UI;
 using System;
 using System.Threading.Tasks;
@@ -13,6 +14,7 @@ namespace KaabliKataloog
     public class App : IExternalApplication
     {
         private RibbonPanel ribbonPanel;
+        private PushButton catalogueButton;
 
         public Result OnStartup(UIControlledApplication application)
         {
@@ -53,9 +55,12 @@ namespace KaabliKataloog
             // Create Ribbon Panel on the custom tab
             ribbonPanel = application.CreateOrSelectPanel(tabName, "EL");
 
-            // Create PushButton with embedded resource
-            ribbonPanel.CreatePushButton<WireCatalogueCommand>()
-                .SetLargeImage("Assets/KaabliKataloog.tiff")
+            // Create PushButton; its icon follows Revit's light/dark UI theme
+            catalogueButton = ribbonPanel.CreatePushButton<WireCatalogueCommand>();
+            ApplyThemeIcon();
+            application.ThemeChanged += OnThemeChanged;
+
+            catalogueButton
                 .SetText("Kaabli\nKataloog")
                 .SetToolTip("Kaabli Kataloog on Revitile loodud plugin, mis aitab inseneridel" +
                 " ja projekteerijatel valida sobivaima kaabli vastavalt määratud tehnilistele nõuetele.\n" +
@@ -80,10 +85,20 @@ namespace KaabliKataloog
 
         public Result OnShutdown(UIControlledApplication application)
         {
-            // Trigger the update check
+            application.ThemeChanged -= OnThemeChanged;
             ribbonPanel?.Remove();
             return Result.Succeeded;
         }
+
+        // Black glyph on Revit's light ribbon, white glyph on the dark one.
+        private void ApplyThemeIcon()
+        {
+            bool dark = UIThemeManager.CurrentTheme == UITheme.Dark;
+            catalogueButton?.SetLargeImage(dark ? "Assets/KaabliKataloog-Dark.tiff" : "Assets/KaabliKataloog-Light.tiff");
+        }
+
+        // Also raised for canvas theme changes; re-reading the UI theme covers both.
+        private void OnThemeChanged(object sender, ThemeChangedEventArgs e) => ApplyThemeIcon();
 
     }
 }

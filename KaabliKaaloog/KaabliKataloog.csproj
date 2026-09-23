@@ -40,7 +40,8 @@
   </ItemGroup>
   
   <ItemGroup>
-    <EmbeddedResource Include="Assets\KaabliKataloog.tiff" />
+    <EmbeddedResource Include="Assets\KaabliKataloog-Light.tiff" />
+    <EmbeddedResource Include="Assets\KaabliKataloog-Dark.tiff" />
   </ItemGroup>
   
   <ItemGroup>
@@ -65,7 +66,10 @@
   </Target>
 	
 	<ItemGroup>
-		<Resource Include="Assets\KaabliKataloog.tiff">
+		<Resource Include="Assets\KaabliKataloog-Light.tiff">
+			<CopyToOutputDirectory>Never</CopyToOutputDirectory>
+		</Resource>
+		<Resource Include="Assets\KaabliKataloog-Dark.tiff">
 			<CopyToOutputDirectory>Never</CopyToOutputDirectory>
 		</Resource>
 		<Resource Include="UI\Themes\DarkTheme.xaml">

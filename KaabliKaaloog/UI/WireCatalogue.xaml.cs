@@ -105,11 +105,8 @@ namespace KaabliKataloog
             {
                 var bestMatch = matchingWires.First();
 
-                // ✅ Convert "Jah" → "G" and "Ei" → "x"
-                string koosKaitsejuhigaDisplay = bestMatch.KoosKaitsejuhiga.Equals("Jah", StringComparison.OrdinalIgnoreCase) ? "G" : "X";
-
                 BestMatchResult.Text = $"Parim vaste:\n\n" +
-                                       $"{bestMatch.WireName} " + $"{bestMatch.ConductorCount}" + $"{koosKaitsejuhigaDisplay}" + $"{bestMatch.WireSize}\n" +
+                                       $"{bestMatch.DisplayName}\n" +
                                        $"Materjal: {bestMatch.Material}\n" +
                                        $"Klass: {bestMatch.FireReactionClass}\n" +
                                        $"Halogeenivaba: {bestMatch.HalogenFree}\n" +

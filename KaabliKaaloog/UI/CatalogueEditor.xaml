@@ -3,232 +3,315 @@
     xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
     xmlns:materialDesign="http://materialdesigninxaml.net/winfx/xaml/themes"
-    Title="Kataloogi redaktor"
-    Width="520"
-    Height="680"
-    AllowsTransparency="True"
-    Background="Transparent"
-    WindowStyle="None"
-    WindowStartupLocation="CenterScreen">
+    Title="Lisa kaabel"
+    Width="560"
+    Height="720"
+    MinWidth="480"
+    MinHeight="480"
+    Background="{DynamicResource Window.Background}"
+    ShowInTaskbar="False"
+    TextOptions.TextFormattingMode="Display"
+    UseLayoutRounding="True"
+    WindowStartupLocation="CenterOwner">
+    <WindowChrome.WindowChrome>
+        <WindowChrome
+            CaptionHeight="52"
+            CornerRadius="0"
+            GlassFrameThickness="0,0,0,1"
+            NonClientFrameEdges="None"
+            ResizeBorderThickness="6"
+            UseAeroCaptionButtons="False" />
+    </WindowChrome.WindowChrome>
 
     <Window.Resources>
         <ResourceDictionary>
             <ResourceDictionary.MergedDictionaries>
-                <ResourceDictionary Source="pack://application:,,,/MaterialDesignThemes.Wpf;component/Themes/MaterialDesignTheme.Dark.xaml" />
-                <ResourceDictionary Source="Themes/ElementStyles.xaml" />
+                <ResourceDictionary Source="pack://application:,,,/KaabliKataloog;component/UI/Themes/DarkTheme.xaml" />
+                <ResourceDictionary Source="pack://application:,,,/KaabliKataloog;component/UI/Themes/ElementStyles.xaml" />
             </ResourceDictionary.MergedDictionaries>
 
-            <!-- Label style (local) -->
-            <Style x:Key="FieldLabel" TargetType="TextBlock">
-                <Setter Property="Width" Value="140"/>
-                <Setter Property="VerticalAlignment" Value="Center"/>
-                <Setter Property="FontSize" Value="12"/>
-                <Setter Property="Foreground" Value="{DynamicResource ForegroundBrush}"/>
-                <Setter Property="DockPanel.Dock" Value="Left"/>
+            <Style BasedOn="{StaticResource Type.Label}" TargetType="{x:Type TextBlock}" x:Key="FieldLabel">
+                <Setter Property="Grid.Column" Value="0" />
             </Style>
-
-            <!-- TextBox style — based on shared CustomTextBoxStyle -->
-            <Style x:Key="FieldBox" BasedOn="{StaticResource CustomTextBoxStyle}" TargetType="TextBox">
-                <Setter Property="Height" Value="28"/>
-                <Setter Property="FontSize" Value="12"/>
-                <Setter Property="HorizontalAlignment" Value="Stretch"/>
+            <Style BasedOn="{StaticResource Input.Text}" TargetType="{x:Type TextBox}" x:Key="Field">
+                <Setter Property="Grid.Column" Value="1" />
             </Style>
-
-            <!-- Button style — based on shared CustomActionButtonStyle -->
-            <Style x:Key="ActionBtn" BasedOn="{StaticResource CustomActionButtonStyle}" TargetType="Button">
-                <Setter Property="Width" Value="Auto"/>
-                <Setter Property="Height" Value="36"/>
-                <Setter Property="FontSize" Value="13"/>
-                <Setter Property="Margin" Value="5,5,5,0"/>
+            <Style BasedOn="{StaticResource Input.Text}" TargetType="{x:Type TextBox}" x:Key="NumberField">
+                <Setter Property="Grid.Column" Value="1" />
+                <Setter Property="Width" Value="120" />
+                <Setter Property="HorizontalAlignment" Value="Left" />
+                <Setter Property="TextAlignment" Value="Right" />
             </Style>
         </ResourceDictionary>
     </Window.Resources>
 
-    <Grid Background="Transparent">
-        <!-- Blurred border -->
-        <Border BorderBrush="{DynamicResource BorderBrush}" BorderThickness="2"
-                CornerRadius="10" Opacity="0.7" ClipToBounds="True" SnapsToDevicePixels="True">
-            <Border.Effect><BlurEffect KernelType="Gaussian" Radius="2"/></Border.Effect>
-        </Border>
+    <Grid
+        TextElement.FontFamily="{StaticResource Font.Text}"
+        TextElement.FontSize="{StaticResource FontSize.Body}"
+        TextElement.Foreground="{DynamicResource Text.Primary}">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="52" />
+            <RowDefinition Height="*" />
+            <RowDefinition Height="Auto" />
+        </Grid.RowDefinitions>
 
-        <!-- Main content -->
-        <Border Margin="2" Background="{DynamicResource PrimaryBackgroundBrush}" CornerRadius="10">
-            <Grid>
-                <Grid.RowDefinitions>
-                    <RowDefinition Height="30"/>
-                    <RowDefinition Height="*"/>
-                    <RowDefinition Height="Auto"/>
-                </Grid.RowDefinitions>
+        <!--  Title area (draggable)  -->
+        <DockPanel Background="Transparent">
+            <Button
+                VerticalAlignment="Top"
+                AutomationProperties.Name="Sulge"
+                Click="Close_Click"
+                DockPanel.Dock="Right"
+                Style="{StaticResource Caption.Close}"
+                ToolTip="Sulge (Esc)">
+                <materialDesign:PackIcon
+                    Width="14"
+                    Height="14"
+                    Kind="WindowClose" />
+            </Button>
+            <TextBlock
+                Margin="24,0,0,0"
+                VerticalAlignment="Center"
+                Style="{StaticResource Type.Title}"
+                Text="Lisa kaabel" />
+        </DockPanel>
 
-                <!-- Title bar -->
-                <Border
-                    Grid.Row="0"
-                    Background="{DynamicResource PrimaryBackgroundBrush}"
-                    BorderBrush="Gray"
-                    BorderThickness=".6"
-                    ClipToBounds="True"
-                    CornerRadius="9,9,0,0"
-                    SnapsToDevicePixels="True">
-                    <DockPanel
-                        Background="Transparent"
-                        VerticalAlignment="Center"
-                        MouseLeftButtonDown="TitleBar_MouseDown">
-                        <Button
-                            Width="35"
-                            Height="19"
-                            Background="Transparent"
-                            BorderBrush="Transparent"
-                            Click="Close_Click"
-                            DockPanel.Dock="Right"
-                            ToolTip="Close">
-                            <Button.Template>
-                                <ControlTemplate TargetType="Button">
-                                    <Grid Background="Transparent">
-                                        <materialDesign:PackIcon
-                                            x:Name="CloseIcon"
-                                            Width="20"
-                                            Height="20"
-                                            HorizontalAlignment="Center"
-                                            VerticalAlignment="Center"
-                                            Foreground="{DynamicResource IconBrush}"
-                                            Kind="CloseCircleOutline" />
-                                    </Grid>
-                                    <ControlTemplate.Triggers>
-                                        <Trigger Property="IsMouseOver" Value="True">
-                                            <Setter TargetName="CloseIcon" Property="Foreground" Value="#DC6B6B" />
-                                        </Trigger>
-                                        <Trigger Property="IsPressed" Value="True">
-                                            <Setter TargetName="CloseIcon" Property="Foreground" Value="#B42C2C" />
-                                        </Trigger>
-                                    </ControlTemplate.Triggers>
-                                </ControlTemplate>
-                            </Button.Template>
-                        </Button>
-                        <TextBlock
-                            Margin="10,0"
-                            VerticalAlignment="Center"
-                            FontSize="13"
-                            FontWeight="SemiBold"
-                            Foreground="{DynamicResource ForegroundBrush}"
-                            Text="Kataloogi redaktor" />
-                    </DockPanel>
-                </Border>
-
-                <!-- Form -->
-                <ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Auto" Margin="16,8,16,8">
+        <ScrollViewer
+            Grid.Row="1"
+            Focusable="False"
+            HorizontalScrollBarVisibility="Disabled"
+            VerticalScrollBarVisibility="Auto">
+            <StackPanel Margin="24,0,24,16">
+                <!--  Live preview: the name the type will get in Revit  -->
+                <Border Margin="0,0,0,16" Style="{StaticResource InsetCard}">
                     <StackPanel>
-
-                        <!-- Section: Add Entry -->
-                        <TextBlock Text="Lisa uus kaabel" FontSize="14" FontWeight="Bold"
-                                   Foreground="{DynamicResource ForegroundBrush}" Margin="0,0,0,10"/>
-
-                        <!-- Tüüp -->
-                        <DockPanel Margin="0,4" LastChildFill="True">
-                            <TextBlock Text="Kaabli tüüp *:" Style="{StaticResource FieldLabel}"/>
-                            <TextBox x:Name="TxtWireName" Style="{StaticResource FieldBox}"
-                                     ToolTip="Nt: JMK, ÖKKJ"/>
-                        </DockPanel>
-
-                        <!-- Materjal -->
-                        <DockPanel Margin="0,4" LastChildFill="True">
-                            <TextBlock Text="Materjal *:" Style="{StaticResource FieldLabel}"/>
-                            <ComboBox x:Name="CmbMaterial" Style="{StaticResource DarkThemeComboBox}"
-                                      Height="28" FontSize="12">
-                                <ComboBoxItem Content="Alumiinium" />
-                                <ComboBoxItem Content="Vask" />
-                            </ComboBox>
-                        </DockPanel>
-
-                        <!-- Klass -->
-                        <DockPanel Margin="0,4" LastChildFill="True">
-                            <TextBlock Text="Tulereakts. klass:" Style="{StaticResource FieldLabel}"/>
-                            <TextBox x:Name="TxtFireClass" Style="{StaticResource FieldBox}"
-                                     ToolTip="Nt: Cca, B2ca"/>
-                        </DockPanel>
-
-                        <!-- Halogeenivaba -->
-                        <DockPanel Margin="0,4" LastChildFill="True">
-                            <TextBlock Text="Halogeenivaba:" Style="{StaticResource FieldLabel}"/>
-                            <ComboBox x:Name="CmbHalogenFree" Style="{StaticResource DarkThemeComboBox}"
-                                      Height="28" FontSize="12">
-                                <ComboBoxItem Content="Jah" />
-                                <ComboBoxItem Content="Ei" />
-                            </ComboBox>
-                        </DockPanel>
-
-                        <!-- Soonte arv -->
-                        <DockPanel Margin="0,4" LastChildFill="True">
-                            <TextBlock Text="Soonte arv *:" Style="{StaticResource FieldLabel}"/>
-                            <TextBox x:Name="TxtConductorCount" Style="{StaticResource FieldBox}"
-                                     ToolTip="Nt: 3, 4, 5"/>
-                        </DockPanel>
-
-                        <!-- Juhi ristlõige -->
-                        <DockPanel Margin="0,4" LastChildFill="True">
-                            <TextBlock Text="Juhi ristlõige (mm²) *:" Style="{StaticResource FieldLabel}"/>
-                            <TextBox x:Name="TxtWireSize" Style="{StaticResource FieldBox}"
-                                     ToolTip="Nt: 1.5, 2.5, 4"/>
-                        </DockPanel>
-
-                        <!-- UV Kindel -->
-                        <DockPanel Margin="0,4" LastChildFill="True">
-                            <TextBlock Text="UV-kindel:" Style="{StaticResource FieldLabel}"/>
-                            <ComboBox x:Name="CmbUvKindel" Style="{StaticResource DarkThemeComboBox}"
-                                      Height="28" FontSize="12">
-                                <ComboBoxItem Content="Jah" />
-                                <ComboBoxItem Content="Ei" />
-                            </ComboBox>
-                        </DockPanel>
-
-                        <!-- Kaitsejuht -->
-                        <DockPanel Margin="0,4" LastChildFill="True">
-                            <TextBlock Text="Koos kaitsejuhiga:" Style="{StaticResource FieldLabel}"/>
-                            <ComboBox x:Name="CmbKoosKaitsejuhiga" Style="{StaticResource DarkThemeComboBox}"
-                                      Height="28" FontSize="12">
-                                <ComboBoxItem Content="Jah" />
-                                <ComboBoxItem Content="Ei" />
-                            </ComboBox>
-                        </DockPanel>
-
-                        <!-- Diameeter -->
-                        <DockPanel Margin="0,4" LastChildFill="True">
-                            <TextBlock Text="Välisläbimõõt (mm):" Style="{StaticResource FieldLabel}"/>
-                            <TextBox x:Name="TxtVälisläbimõõt" Style="{StaticResource FieldBox}"/>
-                        </DockPanel>
-
-                        <!-- Painderaadius -->
-                        <DockPanel Margin="0,4" LastChildFill="True">
-                            <TextBlock Text="Painderaadius (mm):" Style="{StaticResource FieldLabel}"/>
-                            <TextBox x:Name="TxtPainderaadius" Style="{StaticResource FieldBox}"/>
-                        </DockPanel>
-
-                        <!-- Koormusvool -->
-                        <DockPanel Margin="0,4" LastChildFill="True">
-                            <TextBlock Text="Koormusvool (A):" Style="{StaticResource FieldLabel}"/>
-                            <TextBox x:Name="TxtCurrentCapacity" Style="{StaticResource FieldBox}"
-                                     ToolTip="Nt: 13.5"/>
-                        </DockPanel>
-
-                        <!-- Validation message -->
-                        <TextBlock x:Name="TxtValidation" Foreground="#FFCF6679" FontSize="11"
-                                   Visibility="Collapsed" Margin="0,6,0,0" TextWrapping="Wrap"/>
-
-                        <!-- Add Entry button -->
-                        <Button x:Name="BtnAddEntry" Content="Lisa kaabel kataloogi"
-                                Style="{StaticResource ActionBtn}"
-                                Margin="0,14,0,4" Width="260" HorizontalAlignment="Left"
-                                Click="BtnAddEntry_Click"/>
-
-
+                        <TextBlock Style="{StaticResource Type.Caption}" Text="Nimi Revitis" />
+                        <TextBlock
+                            x:Name="PreviewName"
+                            Margin="0,2,0,0"
+                            FontFamily="{StaticResource Font.Display}"
+                            FontSize="{StaticResource FontSize.Title}"
+                            FontWeight="SemiBold"
+                            Text="—"
+                            TextTrimming="CharacterEllipsis" />
                     </StackPanel>
-                </ScrollViewer>
-
-                <!-- Footer -->
-                <Border Grid.Row="2" BorderBrush="{DynamicResource BorderBrush}" BorderThickness="0,1,0,0" Padding="16,10">
-                    <TextBlock x:Name="TxtFooter" FontSize="11" Opacity="0.6"
-                               Foreground="{DynamicResource ForegroundBrush}"/>
                 </Border>
-            </Grid>
+
+                <!--  Cable  -->
+                <TextBlock
+                    Margin="4,0,0,6"
+                    Style="{StaticResource Type.Group}"
+                    Text="KAABEL" />
+                <Border Style="{StaticResource Card}">
+                    <Grid>
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="150" />
+                            <ColumnDefinition Width="*" />
+                        </Grid.ColumnDefinitions>
+                        <Grid.RowDefinitions>
+                            <RowDefinition Height="Auto" />
+                            <RowDefinition Height="8" />
+                            <RowDefinition Height="Auto" />
+                            <RowDefinition Height="8" />
+                            <RowDefinition Height="Auto" />
+                            <RowDefinition Height="12" />
+                            <RowDefinition Height="Auto" />
+                        </Grid.RowDefinitions>
+
+                        <TextBlock Style="{StaticResource FieldLabel}" Text="Kaabli tüüp *" />
+                        <TextBox
+                            x:Name="TxtWireName"
+                            AutomationProperties.Name="Kaabli tüüp"
+                            Style="{StaticResource Field}"
+                            Tag="Nt JMK, ÖKKJ"
+                            TextChanged="Field_Changed" />
+
+                        <TextBlock
+                            Grid.Row="2"
+                            Style="{StaticResource FieldLabel}"
+                            Text="Materjal *" />
+                        <ComboBox
+                            x:Name="CmbMaterial"
+                            Grid.Row="2"
+                            Grid.Column="1"
+                            AutomationProperties.Name="Materjal"
+                            SelectionChanged="Field_Changed"
+                            Style="{StaticResource Input.Combo}"
+                            Tag="Vali materjal" />
+
+                        <TextBlock
+                            Grid.Row="4"
+                            Style="{StaticResource FieldLabel}"
+                            Text="Tulereaktsiooni klass" />
+                        <TextBox
+                            x:Name="TxtFireClass"
+                            Grid.Row="4"
+                            AutomationProperties.Name="Tulereaktsiooni klass"
+                            Style="{StaticResource Field}"
+                            Tag="Nt Cca, B2ca" />
+
+                        <CheckBox
+                            x:Name="ChkHalogenFree"
+                            Grid.Row="6"
+                            Grid.Column="1"
+                            Content="Halogeenivaba"
+                            Style="{StaticResource Input.Check}" />
+                    </Grid>
+                </Border>
+
+                <!--  Conductors  -->
+                <TextBlock
+                    Margin="4,20,0,6"
+                    Style="{StaticResource Type.Group}"
+                    Text="JUHID" />
+                <Border Style="{StaticResource Card}">
+                    <Grid>
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="150" />
+                            <ColumnDefinition Width="*" />
+                        </Grid.ColumnDefinitions>
+                        <Grid.RowDefinitions>
+                            <RowDefinition Height="Auto" />
+                            <RowDefinition Height="8" />
+                            <RowDefinition Height="Auto" />
+                            <RowDefinition Height="12" />
+                            <RowDefinition Height="Auto" />
+                            <RowDefinition Height="8" />
+                            <RowDefinition Height="Auto" />
+                        </Grid.RowDefinitions>
+
+                        <TextBlock Style="{StaticResource FieldLabel}" Text="Soonte arv *" />
+                        <TextBox
+                            x:Name="TxtConductorCount"
+                            AutomationProperties.Name="Soonte arv"
+                            Style="{StaticResource NumberField}"
+                            Tag="Nt 3"
+                            TextChanged="Field_Changed" />
+
+                        <TextBlock
+                            Grid.Row="2"
+                            Style="{StaticResource FieldLabel}"
+                            Text="Juhi ristlõige (mm²) *" />
+                        <TextBox
+                            x:Name="TxtWireSize"
+                            Grid.Row="2"
+                            AutomationProperties.Name="Juhi ristlõige"
+                            Style="{StaticResource NumberField}"
+                            Tag="Nt 1.5"
+                            TextChanged="Field_Changed" />
+
+                        <CheckBox
+                            x:Name="ChkKoosKaitsejuhiga"
+                            Grid.Row="4"
+                            Grid.Column="1"
+                            Checked="Field_Changed"
+                            Content="Koos kaitsejuhiga"
+                            IsChecked="True"
+                            Style="{StaticResource Input.Check}"
+                            Unchecked="Field_Changed" />
+                        <CheckBox
+                            x:Name="ChkUvKindel"
+                            Grid.Row="6"
+                            Grid.Column="1"
+                            Content="UV-kindel"
+                            Style="{StaticResource Input.Check}" />
+                    </Grid>
+                </Border>
+
+                <!--  Dimensions  -->
+                <TextBlock
+                    Margin="4,20,0,6"
+                    Style="{StaticResource Type.Group}"
+                    Text="MÕÕDUD" />
+                <Border Style="{StaticResource Card}">
+                    <Grid>
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="150" />
+                            <ColumnDefinition Width="*" />
+                        </Grid.ColumnDefinitions>
+                        <Grid.RowDefinitions>
+                            <RowDefinition Height="Auto" />
+                            <RowDefinition Height="8" />
+                            <RowDefinition Height="Auto" />
+                            <RowDefinition Height="8" />
+                            <RowDefinition Height="Auto" />
+                        </Grid.RowDefinitions>
+
+                        <TextBlock Style="{StaticResource FieldLabel}" Text="Välisläbimõõt (mm)" />
+                        <TextBox
+                            x:Name="TxtVälisläbimõõt"
+                            AutomationProperties.Name="Välisläbimõõt"
+                            Style="{StaticResource NumberField}" />
+
+                        <TextBlock
+                            Grid.Row="2"
+                            Style="{StaticResource FieldLabel}"
+                            Text="Painderaadius (mm)" />
+                        <TextBox
+                            x:Name="TxtPainderaadius"
+                            Grid.Row="2"
+                            AutomationProperties.Name="Painderaadius"
+                            Style="{StaticResource NumberField}" />
+
+                        <TextBlock
+                            Grid.Row="4"
+                            Style="{StaticResource FieldLabel}"
+                            Text="Koormusvool (A)" />
+                        <TextBox
+                            x:Name="TxtCurrentCapacity"
+                            Grid.Row="4"
+                            AutomationProperties.Name="Koormusvool"
+                            Style="{StaticResource NumberField}"
+                            Tag="Nt 13.5"
+                            TextChanged="Field_Changed" />
+                    </Grid>
+                </Border>
+            </StackPanel>
+        </ScrollViewer>
+
+        <!--  Footer: inline feedback (left), actions (right; Enter adds, Esc closes)  -->
+        <Border
+            Grid.Row="2"
+            Padding="24,12,24,16"
+            BorderBrush="{DynamicResource Separator}"
+            BorderThickness="0,1,0,0">
+            <DockPanel>
+                <StackPanel DockPanel.Dock="Right" Orientation="Horizontal">
+                    <Button
+                        MinWidth="88"
+                        Margin="0,0,8,0"
+                        Click="Close_Click"
+                        Content="Valmis"
+                        IsCancel="True"
+                        Style="{StaticResource Button.Secondary}" />
+                    <Button
+                        x:Name="BtnAddEntry"
+                        MinWidth="120"
+                        Click="BtnAddEntry_Click"
+                        Content="Lisa kataloogi"
+                        IsDefault="True"
+                        Style="{StaticResource Button.Primary}" />
+                </StackPanel>
+
+                <StackPanel
+                    x:Name="FeedbackLine"
+                    VerticalAlignment="Center"
+                    AutomationProperties.LiveSetting="Polite"
+                    Orientation="Horizontal">
+                    <materialDesign:PackIcon
+                        x:Name="FeedbackIcon"
+                        Width="15"
+                        Height="15"
+                        Margin="0,0,8,0"
+                        VerticalAlignment="Center"
+                        Visibility="Collapsed" />
+                    <TextBlock
+                        x:Name="TxtFeedback"
+                        MaxWidth="260"
+                        VerticalAlignment="Center"
+                        Style="{StaticResource Type.Secondary}" />
+                </StackPanel>
+            </DockPanel>
         </Border>
     </Grid>
 </Window>
